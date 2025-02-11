@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +44,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,6 +58,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -94,6 +97,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
+import com.lingfenglong.videoeditor.Components
+import com.lingfenglong.videoeditor.ExportDialog
 import com.lingfenglong.videoeditor.constant.VideoEditingTools
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoEditingTool
@@ -203,179 +208,6 @@ fun AppVideoEditingTopBar() {
     }
 }
 
-class OnDismissRequestParameterProvider : PreviewParameterProvider<() -> Unit> {
-    override val values: Sequence<() -> Unit>
-        get() = sequenceOf({})
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-@Preview
-fun ExportDialog(
-    @PreviewParameter(OnDismissRequestParameterProvider::class) onDismissRequest: () -> Unit
-) {
-    var dropdownMenuExpand by remember { mutableStateOf(false) }
-    val exportSettings by remember { mutableStateOf(ExportSettings.DEFAULT) }
-    var exportName by remember { mutableStateOf(exportSettings.exportName) }
-    var exportFormat by remember { mutableStateOf(exportSettings.exportFormat) }
-
-    // TODO: set the export name
-//    exportSettings.exportName = project.name
-
-    BasicAlertDialog(
-        onDismissRequest = onDismissRequest,
-        modifier = Modifier
-    ) {
-        Card(modifier = Modifier, shape = CardDefaults.shape) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    text = "导出",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
-                Row(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .padding(bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = "导出名字",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                    TextField(value = exportName, onValueChange = { exportName = it })
-                }
-
-                Row(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .padding(bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = "导出位置",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                    TextField(
-                        value = exportSettings.exportPath,
-                        onValueChange = { exportSettings.exportPath = it },
-                        maxLines = 1
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .padding(bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = "导出格式",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    ExposedDropdownMenuBox(
-                        expanded = dropdownMenuExpand,
-                        onExpandedChange = { dropdownMenuExpand = dropdownMenuExpand.not() }
-                    ) {
-//                        TextField(
-//                            modifire = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true),
-//                            value = exportFormat,
-//                            onValueChange = { },
-//                        )
-
-                        ExposedDropdownMenu(
-                            expanded = dropdownMenuExpand,
-                            onDismissRequest = { dropdownMenuExpand = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(text = "mp4") },
-                                onClick = {
-                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_MPEG4
-                                    // TODO: set the export name
-                                    //    exportSettings.exportName = project.name
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(text = "hevc") },
-                                onClick = {
-                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_HEVC
-                                    // TODO: set the export name
-                                    //    exportSettings.exportName = project.name
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(text = "avc") },
-                                onClick = {
-                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_AVC
-                                    // TODO: set the export name
-                                    //    exportSettings.exportName = project.name
-                                }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text(text = "avc1") },
-                                onClick = {
-                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_AV1
-                                    // TODO: set the export name
-                                    //    exportSettings.exportName = project.name
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .padding(bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Text(
-                        modifier = Modifier.wrapContentSize(),
-                        text = "无损导出",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Switch(checked = exportSettings.lossless, onCheckedChange = { exportSettings.lossless = exportSettings.lossless.not() })
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    TextButton(
-                        onClick = { onDismissRequest() },
-                    ) {
-                        Text("取消")
-                    }
-                    TextButton(
-                        onClick = { TODO() }
-                    ) {
-                        Text("确定")
-                    }
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
