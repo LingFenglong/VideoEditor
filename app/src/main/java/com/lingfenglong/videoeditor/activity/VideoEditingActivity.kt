@@ -54,6 +54,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -79,6 +80,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -199,12 +203,21 @@ fun AppVideoEditingTopBar() {
     }
 }
 
+class OnDismissRequestParameterProvider : PreviewParameterProvider<() -> Unit> {
+    override val values: Sequence<() -> Unit>
+        get() = sequenceOf({})
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExportDialog(onDismissRequest: () -> Unit) {
+@Preview
+fun ExportDialog(
+    @PreviewParameter(OnDismissRequestParameterProvider::class) onDismissRequest: () -> Unit
+) {
     var dropdownMenuExpand by remember { mutableStateOf(false) }
     val exportSettings by remember { mutableStateOf(ExportSettings.DEFAULT) }
     var exportName by remember { mutableStateOf(exportSettings.exportName) }
+    var exportFormat by remember { mutableStateOf(exportSettings.exportFormat) }
 
     // TODO: set the export name
 //    exportSettings.exportName = project.name
@@ -225,22 +238,31 @@ fun ExportDialog(onDismissRequest: () -> Unit) {
                     style = MaterialTheme.typography.headlineSmall
                 )
 
-                Row(modifier = Modifier
-                    .wrapContentSize()
-                    .padding(bottom = 16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
                     Text(
-                        modifier = Modifier.alignByBaseline(),
+                        modifier = Modifier.wrapContentSize(),
                         text = "导出名字",
                         textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelMedium,
                     )
                     TextField(value = exportName, onValueChange = { exportName = it })
                 }
 
-                Row(modifier = Modifier
-                    .wrapContentSize()
-                    .padding(bottom = 16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
                     Text(
+                        modifier = Modifier.wrapContentSize(),
                         text = "导出位置",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium,
@@ -252,10 +274,15 @@ fun ExportDialog(onDismissRequest: () -> Unit) {
                     )
                 }
 
-                Row(modifier = Modifier
-                    .wrapContentSize()
-                    .padding(bottom = 16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
                     Text(
+                        modifier = Modifier.wrapContentSize(),
                         text = "导出格式",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium
@@ -264,48 +291,64 @@ fun ExportDialog(onDismissRequest: () -> Unit) {
                         expanded = dropdownMenuExpand,
                         onExpandedChange = { dropdownMenuExpand = dropdownMenuExpand.not() }
                     ) {
-                        DropdownMenuItem(
-                            text = { Text(text = "mp4") },
-                            onClick = {
-                                exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_MPEG4
-                                // TODO: set the export name
-                                //    exportSettings.exportName = project.name
-                            }
-                        )
+//                        TextField(
+//                            modifire = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true),
+//                            value = exportFormat,
+//                            onValueChange = { },
+//                        )
 
-                        DropdownMenuItem(
-                            text = { Text(text = "hevc") },
-                            onClick = {
-                                exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_HEVC
-                                // TODO: set the export name
-                                //    exportSettings.exportName = project.name
-                            }
-                        )
+                        ExposedDropdownMenu(
+                            expanded = dropdownMenuExpand,
+                            onDismissRequest = { dropdownMenuExpand = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(text = "mp4") },
+                                onClick = {
+                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_MPEG4
+                                    // TODO: set the export name
+                                    //    exportSettings.exportName = project.name
+                                }
+                            )
 
-                        DropdownMenuItem(
-                            text = { Text(text = "avc") },
-                            onClick = {
-                                exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_AVC
-                                // TODO: set the export name
-                                //    exportSettings.exportName = project.name
-                            }
-                        )
+                            DropdownMenuItem(
+                                text = { Text(text = "hevc") },
+                                onClick = {
+                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_HEVC
+                                    // TODO: set the export name
+                                    //    exportSettings.exportName = project.name
+                                }
+                            )
 
-                        DropdownMenuItem(
-                            text = { Text(text = "avc1") },
-                            onClick = {
-                                exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_AV1
-                                // TODO: set the export name
-                                //    exportSettings.exportName = project.name
-                            }
-                        )
+                            DropdownMenuItem(
+                                text = { Text(text = "avc") },
+                                onClick = {
+                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_AVC
+                                    // TODO: set the export name
+                                    //    exportSettings.exportName = project.name
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text(text = "avc1") },
+                                onClick = {
+                                    exportSettings.exportFormat = MediaFormat.MIMETYPE_VIDEO_AV1
+                                    // TODO: set the export name
+                                    //    exportSettings.exportName = project.name
+                                }
+                            )
+                        }
                     }
                 }
 
-                Row(modifier = Modifier
-                    .wrapContentSize()
-                    .padding(bottom = 16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
                     Text(
+                        modifier = Modifier.wrapContentSize(),
                         text = "无损导出",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium
