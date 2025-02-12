@@ -10,11 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
@@ -43,21 +42,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.Crop
 import com.lingfenglong.videoeditor.entity.EffectInfo
 import com.lingfenglong.videoeditor.entity.ExportSettings
-import kotlin.concurrent.thread
 
 class Components {
 
 }
-
+@UnstableApi()
 class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectInfo>> {
     override val values: Sequence<List<EffectInfo>>
         get() = sequenceOf(listOf(
-            EffectInfo(1, "裁剪"),
-            EffectInfo(2, "删除"),
-            EffectInfo(3, "编辑"),
-            EffectInfo(4, "更新")
+            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
+            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
+            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
+            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
         ))
 
 }
@@ -65,18 +65,13 @@ class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectI
 /**
  * 视频编辑图层
  */
+@UnstableApi
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showSystemUi = false)
 @Composable
 fun VideoEditingHistory(
     onDismissRequest: () -> Unit = {},
-//    @PreviewParameter(provider = EffectListPreviewParameterProvider::class) effectInfoList: List<EffectInfo>
-    effectInfoList: List<EffectInfo> = listOf(
-        EffectInfo(1, "裁剪"),
-        EffectInfo(2, "删除"),
-        EffectInfo(3, "编辑"),
-        EffectInfo(4, "更新"),
-    )
+    @PreviewParameter(provider = EffectListPreviewParameterProvider::class) effectInfoList: List<EffectInfo>
 ) {
     BasicAlertDialog(
         modifier = Modifier,
@@ -97,25 +92,7 @@ fun VideoEditingHistory(
                 }
 
                 LazyColumn(modifier = Modifier.height(300.dp)) {
-                    items(effectInfoList) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                modifier = Modifier,
-                                text = it.effectName,
-                                textAlign = TextAlign.Center
-                            )
-
-                            IconButton(onClick = { /*TODO*/ }) {
-                                Icon(painter = rememberVectorPainter(image = Icons.Filled.Delete), contentDescription = "删除")
-                            }
-                        }
-                    }
+                    items(effectInfoList) { EffectInfoItem(it) }
                 }
 
                 Row(
@@ -139,6 +116,46 @@ fun VideoEditingHistory(
     }
 }
 
+@UnstableApi
+class EffectInfoPreviewParameterProvider : PreviewParameterProvider<EffectInfo> {
+    override val values: Sequence<EffectInfo>
+        get() = sequenceOf(
+            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) })
+        )
+}
+
+@UnstableApi
+@Preview
+@Composable
+fun EffectInfoItem(
+    @PreviewParameter(provider = EffectInfoPreviewParameterProvider::class) effectInfo: EffectInfo
+) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        Row() {
+            Icon(
+                modifier = Modifier.wrapContentSize(),
+                painter = rememberVectorPainter(effectInfo.icon()),
+                contentDescription = "效果图标"
+            )
+            Text(
+                modifier = Modifier.wrapContentSize(),
+                text = effectInfo.name,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(painter = rememberVectorPainter(image = Icons.Filled.Delete), contentDescription = "删除")
+        }
+    }
+}
+
 class OnDismissRequestParameterProvider : PreviewParameterProvider<() -> Unit> {
     override val values: Sequence<() -> Unit>
         get() = sequenceOf({})
@@ -151,12 +168,12 @@ class OnDismissRequestParameterProvider : PreviewParameterProvider<() -> Unit> {
 @Composable
 //@Preview(showSystemUi = true, showBackground = false)
 fun ExportDialog(
-    @PreviewParameter(OnDismissRequestParameterProvider::class) onDismissRequest: () -> Unit
+    @PreviewParameter(OnDismissRequestParameterProvider::class) onDismissRequest: () -> Unit,
 ) {
     var dropdownMenuExpand by remember { mutableStateOf(false) }
     val exportSettings by remember { mutableStateOf(ExportSettings.DEFAULT) }
     var exportName by remember { mutableStateOf(exportSettings.exportName) }
-    var exportFormat by remember { mutableStateOf(exportSettings.exportFormat) }
+    var exportFormat by remember { mutableStateOf(exportSettings.videoMimeType) }
     var exportFormatText by remember { mutableStateOf("MP4") }
     var exportLossless by remember { mutableStateOf(exportSettings.lossless) }
 

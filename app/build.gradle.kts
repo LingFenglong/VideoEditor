@@ -18,7 +18,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
+        kotlinCompilerExtensionVersion = "1.5.2"
     }
 
     defaultConfig {
@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.transformer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.effect)
 
     // Gson
     implementation(libs.gson)

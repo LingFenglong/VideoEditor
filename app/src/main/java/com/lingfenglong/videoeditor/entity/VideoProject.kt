@@ -1,7 +1,5 @@
 package com.lingfenglong.videoeditor.entity
 
-import com.arthenica.ffmpegkit.MediaInformation
-import org.json.JSONObject
 import java.io.Serializable
 
 data class VideoProject(
@@ -12,10 +10,10 @@ data class VideoProject(
     val projectName: String,
     val thumb: String,
     val duration: Long,
-    val mediaInformation: MediaInformation?
+    val effectInfoList: MutableList<EffectInfo>
 ) : Serializable {
 
     companion object {
-        val EMPTY = VideoProject("", "", "", "", "", "", 0, null)
+        val EMPTY = VideoProject("", "", "", "", "", "", 0, mutableListOf())
     }
 }

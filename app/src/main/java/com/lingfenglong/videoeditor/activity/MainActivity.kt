@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity() {
                     originalVideoFileName,
                     "${projectDir.absolutePath}/${Constants.PROJECT_THUMB}",
                     (mediaInformation.duration.toDouble() * 1000).roundToLong(),
-                    mediaInformation
+                    mutableListOf()
                 )
 
                 projectInfo.outputStream().use { fos ->

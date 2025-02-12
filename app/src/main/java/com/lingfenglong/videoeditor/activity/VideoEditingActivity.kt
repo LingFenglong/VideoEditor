@@ -1,7 +1,6 @@
 package com.lingfenglong.videoeditor.activity
 
 import android.annotation.SuppressLint
-import android.media.MediaFormat
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -44,28 +41,19 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.outlined.ArrowDropDown
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -83,9 +71,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -97,10 +82,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
-import com.lingfenglong.videoeditor.Components
 import com.lingfenglong.videoeditor.ExportDialog
+import com.lingfenglong.videoeditor.VideoEditingHistory
 import com.lingfenglong.videoeditor.constant.VideoEditingTools
-import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoEditingTool
 import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
@@ -143,6 +127,7 @@ fun VideoEditingPage(videoProject: VideoProject) {
 @Composable
 fun AppVideoEditingTopBar() {
     var exportDialogVisible by remember { mutableStateOf(false) }
+    var videoEditingHistoryVisible by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -198,6 +183,10 @@ fun AppVideoEditingTopBar() {
                 painter = rememberVectorPainter(image = Icons.Default.Save),
                 contentDescription = "保存"
             )
+        }
+
+        if (videoEditingHistoryVisible) {
+            VideoEditingHistory()
         }
 
         if (exportDialogVisible) {
@@ -528,7 +517,7 @@ private fun AppVideoPlayerControls(
                                 Icons.Filled.Pause
                             }
 
-                            isVideoPlaying.not() && currentPosition == currentProject.mediaInformation!!.duration.toLong() -> {
+                            isVideoPlaying.not() && currentPosition == currentProject.duration -> {
                                 Icons.Filled.Replay
                             }
 
