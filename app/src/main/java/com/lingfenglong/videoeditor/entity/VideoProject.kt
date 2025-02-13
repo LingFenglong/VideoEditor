@@ -1,5 +1,6 @@
 package com.lingfenglong.videoeditor.entity
 
+import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import java.io.Serializable
 
 data class VideoProject(

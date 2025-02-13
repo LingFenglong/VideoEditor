@@ -16,7 +16,7 @@
       <SelectionState runConfigName="ExportDialog">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="TrimClipEffect">
+      <SelectionState runConfigName="WaterMarkEffect">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

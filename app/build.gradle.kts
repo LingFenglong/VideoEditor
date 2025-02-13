@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId = "com.lingfenglong.videoeditor"
-        minSdk = 34
+        minSdk = 33
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -58,6 +58,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // color picker
+    implementation(libs.colorpicker.compose)
 
     // media3
     implementation(libs.androidx.media3.exoplayer)

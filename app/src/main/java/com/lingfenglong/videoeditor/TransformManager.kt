@@ -9,7 +9,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
 import androidx.media3.transformer.Transformer
-import com.lingfenglong.videoeditor.entity.EffectInfo
+import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
 

@@ -1,6 +1,5 @@
 package com.lingfenglong.videoeditor.constant
 
-import android.graphics.Bitmap.CompressFormat
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.BrandingWatermark
 import androidx.compose.material.icons.rounded.Compress

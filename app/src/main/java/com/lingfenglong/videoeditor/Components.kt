@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material3.BasicAlertDialog
@@ -43,9 +42,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Crop
-import com.lingfenglong.videoeditor.entity.EffectInfo
 import com.lingfenglong.videoeditor.entity.ExportSettings
+import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 
 class Components {
 
@@ -56,10 +54,10 @@ class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectI
     override val values: Sequence<List<EffectInfo>>
         get() = sequenceOf(
             listOf(
-                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
+//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
             )
         )
 }
@@ -74,10 +72,10 @@ class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectI
 fun VideoEditingHistory(
     onDismissRequest: () -> Unit = {},
     effectInfoList: List<EffectInfo> = listOf(
-        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
+//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
     ),
 ) {
     BasicAlertDialog(
@@ -127,7 +125,7 @@ fun VideoEditingHistory(
 class EffectInfoPreviewParameterProvider : PreviewParameterProvider<EffectInfo> {
     override val values: Sequence<EffectInfo>
         get() = sequenceOf(
-            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) })
+//            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) })
         )
 }
 
