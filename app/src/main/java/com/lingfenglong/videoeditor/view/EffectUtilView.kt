@@ -59,10 +59,7 @@ class EffectUtilView {
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
-//@Preview(
-//    device = "id:pixel_4",
-//    apiLevel = 30, showSystemUi = true
-//)
+@Preview(showSystemUi = true)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrimClipEffect() {
@@ -73,7 +70,6 @@ fun TrimClipEffect() {
     val endInteractionSource = remember { MutableInteractionSource() }
     val startThumbAndTrackColors = SliderDefaults.colors(thumbColor = Color.Blue, activeTrackColor = Color.Red)
     val endThumbColors = SliderDefaults.colors(thumbColor = Color.Green)
-
 
     val rangeSliderState = remember {
         RangeSliderState(
@@ -87,19 +83,21 @@ fun TrimClipEffect() {
     mediaMetadataRetriever.setDataSource(LocalContext.current, currentVideoInfo.uri)
 
     val scope = rememberCoroutineScope()
-    var startImage: ImageBitmap = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeStart.toInt())!!.asImageBitmap()
-    var endImage: ImageBitmap = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeEnd.toInt())!!.asImageBitmap()
-    rangeSliderState.onValueChangeFinished = {
-        scope.launch {
-            startImage = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeStart.toInt())!!.asImageBitmap()
-            endImage = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeEnd.toInt())!!.asImageBitmap()
-        }
-    }
+//    var startImage: ImageBitmap = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeStart.toInt())!!.asImageBitmap()
+//    var endImage: ImageBitmap = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeEnd.toInt())!!.asImageBitmap()
+//    rangeSliderState.onValueChangeFinished = {
+//        scope.launch {
+//            startImage = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeStart.toInt())!!.asImageBitmap()
+//            endImage = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeEnd.toInt())!!.asImageBitmap()
+//        }
+//    }
 
     val tooltipState = remember { TooltipState() }
 
     DrawerEffectView {
         Column {
+
+            // 进度条
             Row {
                 RangeSlider(
                     state = rangeSliderState,
@@ -120,10 +118,10 @@ fun TrimClipEffect() {
                                     state = tooltipState
                                 ) {
                                     Card(shape = MaterialTheme.shapes.small) {
-                                        Image(
-                                            bitmap = startImage,
-                                            contentDescription = "activeRangeStart"
-                                        )
+//                                        Image(
+//                                            bitmap = startImage,
+//                                            contentDescription = "activeRangeStart"
+//                                        )
                                     }
                                 }
                             },
@@ -139,11 +137,11 @@ fun TrimClipEffect() {
                         Label(
                             label = {
                                 Card(shape = RectangleShape) {
-                                    Image(
-                                        contentScale = ContentScale.Fit,
-                                        bitmap = endImage,
-                                        contentDescription = "activeRangeEnd"
-                                    )
+//                                    Image(
+//                                        contentScale = ContentScale.Fit,
+//                                        bitmap = endImage,
+//                                        contentDescription = "activeRangeEnd"
+//                                    )
                                 }
                             },
                             interactionSource = endInteractionSource
@@ -156,6 +154,8 @@ fun TrimClipEffect() {
                     }
                 )
             }
+
+            // 取消 和 确认
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -189,7 +189,7 @@ fun MergeEffect() {
 
 }
 
-@Preview(apiLevel = 29, showSystemUi = true, showBackground = true)
+//@Preview(showSystemUi = true)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompressEffect() {

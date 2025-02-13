@@ -50,16 +50,18 @@ import com.lingfenglong.videoeditor.entity.ExportSettings
 class Components {
 
 }
-@UnstableApi()
+
+@UnstableApi
 class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectInfo>> {
     override val values: Sequence<List<EffectInfo>>
-        get() = sequenceOf(listOf(
-            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
-            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
-            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
-            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) }),
-        ))
-
+        get() = sequenceOf(
+            listOf(
+                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
+            )
+        )
 }
 
 /**
@@ -71,7 +73,12 @@ class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectI
 @Composable
 fun VideoEditingHistory(
     onDismissRequest: () -> Unit = {},
-    @PreviewParameter(provider = EffectListPreviewParameterProvider::class) effectInfoList: List<EffectInfo>
+    effectInfoList: List<EffectInfo> = listOf(
+        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
+        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
+    ),
 ) {
     BasicAlertDialog(
         modifier = Modifier,
@@ -124,18 +131,19 @@ class EffectInfoPreviewParameterProvider : PreviewParameterProvider<EffectInfo> 
         )
 }
 
-@UnstableApi
+
+@androidx.annotation.OptIn(UnstableApi::class)
 @Preview
 @Composable
 fun EffectInfoItem(
-    @PreviewParameter(provider = EffectInfoPreviewParameterProvider::class) effectInfo: EffectInfo
+    @PreviewParameter(provider = EffectInfoPreviewParameterProvider::class) effectInfo: EffectInfo,
 ) {
     Row (
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row() {
             Icon(
@@ -156,7 +164,7 @@ fun EffectInfoItem(
     }
 }
 
-class OnDismissRequestParameterProvider : PreviewParameterProvider<() -> Unit> {
+class OnDismissRequestParameterParameterProvider : PreviewParameterProvider<() -> Unit> {
     override val values: Sequence<() -> Unit>
         get() = sequenceOf({})
 }
@@ -168,7 +176,7 @@ class OnDismissRequestParameterProvider : PreviewParameterProvider<() -> Unit> {
 @Composable
 //@Preview(showSystemUi = true, showBackground = false)
 fun ExportDialog(
-    @PreviewParameter(OnDismissRequestParameterProvider::class) onDismissRequest: () -> Unit,
+    @PreviewParameter(OnDismissRequestParameterParameterProvider::class) onDismissRequest: () -> Unit,
 ) {
     var dropdownMenuExpand by remember { mutableStateOf(false) }
     val exportSettings by remember { mutableStateOf(ExportSettings.DEFAULT) }

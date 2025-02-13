@@ -11,7 +11,7 @@ android {
     }
 
     namespace = "com.lingfenglong.videoeditor"
-    compileSdk = 34
+    compileSdk = 35
 
     buildFeatures {
         compose = true
@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId = "com.lingfenglong.videoeditor"
-        minSdk = 29
+        minSdk = 34
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

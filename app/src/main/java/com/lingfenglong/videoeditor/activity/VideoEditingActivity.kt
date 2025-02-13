@@ -124,6 +124,7 @@ fun VideoEditingPage(videoProject: VideoProject) {
     )
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun AppVideoEditingTopBar() {
     var exportDialogVisible by remember { mutableStateOf(false) }
@@ -164,7 +165,7 @@ fun AppVideoEditingTopBar() {
         IconButton(
             colors = IconButtonDefaults.iconButtonColors(),
             onClick = {
-
+                videoEditingHistoryVisible = true
             }
         ) {
             Icon(
@@ -176,7 +177,9 @@ fun AppVideoEditingTopBar() {
 
         IconButton(
             colors = IconButtonDefaults.iconButtonColors(),
-            onClick = { exportDialogVisible = true }
+            onClick = {
+                exportDialogVisible = true
+            }
         ) {
             Icon(
                 tint = Color.Black,
@@ -186,7 +189,10 @@ fun AppVideoEditingTopBar() {
         }
 
         if (videoEditingHistoryVisible) {
-            VideoEditingHistory()
+            VideoEditingHistory(
+                onDismissRequest = {},
+                effectInfoList = mutableListOf()
+            )
         }
 
         if (exportDialogVisible) {
@@ -302,6 +308,7 @@ fun AppVideoEditingTool(videoEditingTool: VideoEditingTool) {
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
@@ -390,7 +397,6 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
                                 object : Runnable {
                                     override fun run() {
                                         currentTime = player.currentPosition.coerceIn(0, duration)
-                                        Log.i("test", "run: ${frames}")
                                         currentFrame = (currentTime * framePerMillisecond).toLong().coerceIn(0, frames)
                                         if (listenerRepeating) {
                                             listenerHandler.postDelayed(this, 100L)
@@ -424,7 +430,10 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
                 .clickable { viewModel.setControlsVisible(controlsVisible.not()) },
             factory = {
                 PlayerView(it).apply {
-                    this.player = player
+                    setPlayer(player)
+                    hideController()
+                    setShowPreviousButton(false)
+                    setShowNextButton(false)
                 }
 //                textureView = TextureView(context).apply {
 //                    layoutParams = LayoutParams(
@@ -436,14 +445,14 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
             }
         )
 
-        val videoPlayerControlsStates = VideoPlayerControlsStates(
-            isPlaying = { isPlaying },
-            currentTime = { currentTime },
-            currentFrames = { currentFrame },
-            duration = { duration },
-            frames = { frames },
-        )
-        AppVideoPlayerControls(player, videoPlayerControlsStates)
+//        val videoPlayerControlsStates = VideoPlayerControlsStates(
+//            isPlaying = { isPlaying },
+//            currentTime = { currentTime },
+//            currentFrames = { currentFrame },
+//            duration = { duration },
+//            frames = { frames },
+//        )
+//        AppVideoPlayerControls(player, videoPlayerControlsStates)
     }
 
 }
