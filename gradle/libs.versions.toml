@@ -1,6 +1,30 @@
 [versions]
 activityCompose = "1.10.0"
-agp = "8.6.1"
+agp = "8.4.0"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 colorpickerCompose = "1.1.2"
 ffmpegKitFull = "6.0-2"
 gson = "2.11.0"
