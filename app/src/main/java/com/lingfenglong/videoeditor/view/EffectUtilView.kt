@@ -1,5 +1,7 @@
 package com.lingfenglong.videoeditor.view
 
+import android.app.Dialog
+import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -59,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.GenericFontFamily
@@ -70,8 +73,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.OverlayEffect
+import androidx.media3.effect.TextOverlay
+import androidx.media3.effect.TextureOverlay
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
 
 class EffectUtilView {
@@ -285,10 +292,13 @@ fun CompressEffect() {
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showSystemUi = true)
 @Composable
 fun WaterMarkEffect() {
+    val viewModel = viewModel(modelClass =  VideoEditorViewModel::class)
+
     var text by remember { mutableStateOf("Text") }
     var fontSize by remember { mutableIntStateOf(12) }
     var fontColor by remember { mutableStateOf(Color.Black) }
@@ -307,7 +317,7 @@ fun WaterMarkEffect() {
 
     if (dialogVisible) {
         Dialog(
-            onDismissRequest = {  }
+            onDismissRequest = { dialogVisible = false }
         ) {
             Card() {
                 Column(
@@ -519,12 +529,16 @@ fun WaterMarkEffect() {
                         horizontalArrangement = Arrangement.End,
                     ) {
                         TextButton(
-                            onClick = {  },
+                            onClick = { dialogVisible = false },
                         ) {
                             Text("取消")
                         }
                         TextButton(
-                            onClick = { TODO() }
+                            onClick = {
+                                viewModel.addEffectInfo(WaterMarkEffectInfo(effect = { OverlayEffect(listOf(TextOverlay.createStaticBitmapOverlay(
+                                Bitmap.createBitmap(1,1, Bitmap.Config.RGBA_F16)))) }))
+                                dialogVisible = false
+                            }
                         ) {
                             Text("确定")
                         }

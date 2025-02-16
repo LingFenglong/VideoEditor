@@ -1,11 +1,17 @@
 package com.lingfenglong.videoeditor.viewmodel
 
+import android.app.Application
 import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
 import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
+import com.lingfenglong.videoeditor.entity.effect.EffectInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +19,7 @@ import kotlinx.coroutines.flow.update
 import java.io.File
 import java.io.ObjectInputStream
 
-class VideoEditorViewModel : ViewModel() {
+class VideoEditorViewModel(application: Application) : AndroidViewModel(application) {
     private val _videoProjectList = MutableStateFlow(ArrayList<VideoProject>())
     val videoProjectList = _videoProjectList.asStateFlow()
 
@@ -61,6 +67,7 @@ class VideoEditorViewModel : ViewModel() {
     fun removeVideoProject(videoProject: VideoProject) {
         _videoProjectList.update {
             it.remove(videoProject)
+            File(videoProject.projectFilePath).deleteRecursively()
             it
         }
     }
@@ -89,6 +96,8 @@ class VideoEditorViewModel : ViewModel() {
                 projectList as ArrayList<VideoProject>
             }
         }
+
+        Log.i("project list", "updateVideoProjectList: ${_videoProjectList.value}")
     }
 
     fun setVideoPlaying(isPLaying: Boolean) {
@@ -101,6 +110,20 @@ class VideoEditorViewModel : ViewModel() {
 
     fun updateCurrentVideoInfo(videoInfo: VideoInfo) {
         _currentVideoInfo.update { videoInfo }
+    }
+
+    fun updateCurrentVideoProject(videoProject: VideoProject) {
+        _currentProject.update {
+            videoProject
+        }
+    }
+
+    fun addEffectInfo(effectInfo: EffectInfo) {
+        _currentProject.update {
+            it.effectInfoList.add(effectInfo)
+            Log.i("EffectInfo", "current video project effectInfo: ${it.effectInfoList}")
+            it
+        }
     }
 
 

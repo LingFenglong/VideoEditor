@@ -2,6 +2,9 @@ package com.lingfenglong.videoeditor.activity
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
 import android.os.FileUtils
@@ -13,26 +16,32 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.VideoFile
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,23 +50,32 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arthenica.ffmpegkit.FFprobeKit
@@ -80,8 +98,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val viewModel = VideoEditorViewModel()
-        viewModel.updateVideoProjectList(this)
+        val vm = VideoEditorViewModel(application)
+        vm.updateVideoProjectList(this)
 
         val pickMedia: ActivityResultLauncher<PickVisualMediaRequest> =
             registerForActivityResult(
@@ -92,10 +110,9 @@ class MainActivity : AppCompatActivity() {
                     intent.action = Intent.ACTION_EDIT
 
                     val videoProject = createNewProject(this, uri)
-                    intent.putExtra("videoProject", videoProject.toJson())
-
-                    viewModel.updateVideoProjectList(this)
-                    startActivity(intent)
+                    vm.addVideoProject(videoProject)
+                    vm.updateVideoProjectList(this)
+                    videoProject.startEditing(this)
                 } else {
 
                 }
@@ -104,10 +121,11 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             MaterialTheme {
+                val viewModel = viewModel { vm }
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
-                val vm = viewModel { viewModel }
-                val projectList by vm.videoProjectList.collectAsState()
+
+                val projectList by viewModel.videoProjectList.collectAsState()
 
                 AppNavigationDrawer(drawerState, pickMedia) {
                     Column {
@@ -140,37 +158,54 @@ class MainActivity : AppCompatActivity() {
         contentResolver
             .openFile(videoFileUri, "r", null)
             .use {
-
                 val originalVideoFileInputStream = FileInputStream(it!!.fileDescriptor)
                 val originalVideoFileNameAndExt = getFileNameAndExtFromUri(context, videoFileUri)
                 val originalVideoFileName = originalVideoFileNameAndExt.substringBeforeLast(".")
                 val originalVideoFileExt = originalVideoFileNameAndExt.substringAfterLast(".")
 
+                // create project dir
                 val projectDir = File(projectsBaseDir, originalVideoFileName)
                 projectDir.mkdirs()
 
+                // copy origin video file
                 val targetVideoFile = File(projectDir, originalVideoFileNameAndExt)
                 FileUtils.copy(originalVideoFileInputStream, targetVideoFile.outputStream())
                 uri = targetVideoFile.toUri()
 
+                // create project info file
+                // get video information(frames, duration etc) by ffmpeg
                 val projectInfo = File(projectDir, Constants.PROJECT_INFO)
                 val mediaInformation = FFprobeKit.getMediaInformation(uri.toString())
                     .mediaInformation
 
-                videoProject = VideoProject(
-                    uri.toString(),
-                    "${dataDir.absolutePath}/${originalVideoFileNameAndExt}",
-                    "${dataDir.absolutePath}/${Constants.PROJECT_INFO}",
-                    projectDir.absolutePath,
-                    originalVideoFileName,
-                    "${projectDir.absolutePath}/${Constants.PROJECT_THUMB}",
-                    (mediaInformation.duration.toDouble() * 1000).roundToLong(),
-                    mutableListOf()
-                )
 
+                // create videoProject object
+                videoProject = VideoProject(
+                    videoFileUri = uri.toString(),
+                    videoFilePath = "${dataDir.absolutePath}/${originalVideoFileNameAndExt}",
+                    videoInfoPath = "${dataDir.absolutePath}/${Constants.PROJECT_INFO}",
+                    projectFilePath = projectDir.absolutePath,
+                    projectName = originalVideoFileName,
+                    thumb = "${projectDir.absolutePath}/${Constants.PROJECT_THUMB}",
+                    duration = (mediaInformation.duration.toDouble() * 1000).roundToLong(),
+                    frames = mediaInformation.streams[0].getStringProperty("nb_frames").toLong(),
+                    frameRate = mediaInformation.streams[0].realFrameRate.substringBeforeLast("/").toFloat(),
+                    format = mediaInformation.format,
+                    effectInfoList = mutableListOf()
+                )
+                // save project info file
                 projectInfo.outputStream().use { fos ->
                     fos.write(Util.gson.toJson(videoProject).toByteArray())
                     fos.flush()
+                }
+
+                // create thumb file
+                File("${projectDir.absolutePath}/${Constants.PROJECT_THUMB}").apply {
+                    createNewFile()
+                    val mediaMetadataRetriever = MediaMetadataRetriever()
+                    mediaMetadataRetriever.setDataSource(context, uri)
+                    mediaMetadataRetriever
+                        .getFrameAtIndex(0)?.compress(Bitmap.CompressFormat.PNG, 100, this.outputStream())
                 }
             }
         return videoProject!!
@@ -181,7 +216,7 @@ class MainActivity : AppCompatActivity() {
     fun AppTopBar(drawerState: DrawerState, scope: CoroutineScope) {
         CenterAlignedTopAppBar(
             title = {
-                Text(text = "Video Editor")
+                Text(text = "视频编辑器")
             },
             navigationIcon = {
                 IconButton(
@@ -255,85 +290,242 @@ class MainActivity : AppCompatActivity() {
             content.invoke()
         }
     }
+}
 
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun VideoProjectItem(videoProject: VideoProject) {
-        var deleteDialogVisibility by remember { mutableStateOf(false) }
-        val context = LocalContext.current
-        val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+@Preview
+fun VideoProjectItem(
+    @PreviewParameter(provider = VideoProjectPreviewParameterProvider::class) videoProject: VideoProject
+) {
+    if (File(videoProject.thumb).exists().not()) return
 
-        val projectInfo by viewModel.currentVideoInfo.collectAsState()
+    LaunchedEffect(key1 = videoProject) {
 
-        Row(
+    }
+
+    val context = LocalContext.current
+    var videoProjectDialogVisible by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 8.dp, vertical = 8.dp)
+            .combinedClickable(
+                onClick = {
+                    val intent = Intent(context, VideoEditingActivity::class.java)
+                    intent.action = Intent.ACTION_EDIT
+                    intent.putExtra("videoProject", videoProject.toJson())
+                    context.startActivity(intent)
+                }
+            ),
+        shape = RoundedCornerShape(8),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-                .background(color = Color.LightGray, shape = RoundedCornerShape(8))
-                .combinedClickable(
-                    onLongClick = {
-                        deleteDialogVisibility = true
-                    },
-                    onClick = {
-                        val intent = Intent(context, VideoEditingActivity::class.java)
-                        intent.action = Intent.ACTION_EDIT
-                        intent.putExtra("videoProject", videoProject.toJson())
-                        context.startActivity(intent)
-                    }
-                ),
+                .height(84.dp)
         ) {
-            Image(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.FillHeight,
-                painter = rememberVectorPainter(image = Icons.Default.VideoFile),
-                contentDescription = "video file"
-            )
-            Column(
-                modifier = Modifier
-                    .padding(start = 8.dp)
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    modifier = Modifier.padding(top = 6.dp),
-                    color = Color.Black,
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                    text = videoProject.projectName
-                )
-                Text(
-                    modifier = Modifier.padding(top = 2.dp),
-                    color = Color.Gray,
-                    fontSize = TextUnit(12f, TextUnitType.Sp),
-                    text = videoProject.duration.toString()
+                Card(
+                    modifier = Modifier
+                        .size(80.dp, 80.dp)
+                ) {
+                    Image(
+                        modifier = Modifier.padding(4.dp),
+                        contentScale = ContentScale.Crop,
+                        bitmap = BitmapFactory.decodeFile(videoProject.thumb).asImageBitmap(),
+                        contentDescription = "thumb"
+                    )
+                }
+
+                Spacer(modifier = Modifier.padding(12.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        modifier = Modifier.padding(top = 6.dp),
+                        color = Color.Black,
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        text = videoProject.projectName
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        color = Color.Gray,
+                        fontSize = TextUnit(12f, TextUnitType.Sp),
+                        text = videoProject.duration.timeFormat()
+                    )
+                }
+            }
+
+            IconButton(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .align(alignment = Alignment.TopEnd),
+                onClick = { videoProjectDialogVisible = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreHoriz,
+                    contentDescription = "more operation",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(40.dp, 40.dp)
                 )
             }
         }
+    }
 
-        if (deleteDialogVisibility) {
-            AlertDialog(
-                onDismissRequest = { deleteDialogVisibility = false },
-                title = { Text(text = "提示") },
-                text = { Text(text = "确定删除？") },
-                confirmButton = {
-                    Button(onClick = {
-                        // 执行确认操作
-                        deleteDialogVisibility = false
-                        File(projectInfo.project.projectFilePath).deleteRecursively()
-                    }) {
-                        Text(text = "确定")
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = {
-                        // 执行取消操作
-                        deleteDialogVisibility = false
-                    }) {
-                        Text(text = "取消")
-                    }
-                }
+    if (videoProjectDialogVisible) {
+        VideoProjectDetailDialog(
+            videoProject = videoProject,
+            onDismissRequest = { videoProjectDialogVisible = false }
+        )
+    }
+}
+
+@Composable
+fun VideoProjectDetailDialog(
+    videoProject: VideoProject,
+    onDismissRequest: () -> Unit
+) {
+    Log.i("project detail", "current project detail: $videoProject")
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var deleteDialogVisibility by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismissRequest) {
+        Card(modifier = Modifier) {
+            Text(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .fillMaxWidth(),
+                text = "详细信息",
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineSmall
             )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "项目名称")
+                Text(text = videoProject.projectName)
+            }
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "视频编码")
+                Text(text = videoProject.format)
+            }
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "时长")
+                Text(text = videoProject.duration.timeFormat())
+            }
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "帧数")
+                Text(text = videoProject.frames.toString())
+            }
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                FilledTonalButton(
+                    onClick = { deleteDialogVisibility = true },
+                ) {
+                    Text(text = "删除")
+                }
+
+                FilledTonalButton(
+                    onClick = { videoProject.startEditing(context); onDismissRequest() }
+                ) {
+                    Text(text = "编辑")
+                }
+            }
         }
     }
 
+    if (deleteDialogVisibility) {
+        val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
+
+        AlertDialog(
+            onDismissRequest = { deleteDialogVisibility = false },
+            title = { Text(text = "提示") },
+            text = { Text(text = "确定删除？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.removeVideoProject(videoProject)
+                    viewModel.updateVideoProjectList(context)
+                    onDismissRequest()
+                    deleteDialogVisibility = false
+                }) {
+                    Text(text = "确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    deleteDialogVisibility = false
+                }) {
+                    Text(text = "取消")
+                }
+            }
+        )
+    }
+}
+
+class VideoProjectPreviewParameterProvider : PreviewParameterProvider<VideoProject> {
+    override val values: Sequence<VideoProject>
+        get() = sequenceOf(
+            VideoProject(
+                videoFileUri = "file:///data/user/0/com.lingfenglong.videoeditor/projects/1000000033/1000000033.mp4",
+                videoFilePath = "/data/user/0/com.lingfenglong.videoeditor/1000000033.mp4",
+                videoInfoPath = "/data/user/0/com.lingfenglong.videoeditor/project.info",
+                projectFilePath = "/data/user/0/com.lingfenglong.videoeditor/projects/1000000033",
+                projectName = "1000000033",
+                thumb = "/data/user/0/com.lingfenglong.videoeditor/projects/1000000033/thumb.png",
+                duration = 20615,
+                frames = 30L,
+                frameRate = 30_000F,
+                format = "MP4",
+                effectInfoList = mutableListOf()
+            )
+        )
 }

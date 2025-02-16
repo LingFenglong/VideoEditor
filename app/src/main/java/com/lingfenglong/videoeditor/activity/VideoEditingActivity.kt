@@ -83,6 +83,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.lingfenglong.videoeditor.ExportDialog
+import com.lingfenglong.videoeditor.TransformManager
 import com.lingfenglong.videoeditor.VideoEditingHistory
 import com.lingfenglong.videoeditor.constant.VideoEditingTools
 import com.lingfenglong.videoeditor.entity.VideoEditingTool
@@ -90,6 +91,8 @@ import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.toObject
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 class VideoEditingActivity : AppCompatActivity() {
@@ -190,14 +193,15 @@ fun AppVideoEditingTopBar() {
 
         if (videoEditingHistoryVisible) {
             VideoEditingHistory(
-                onDismissRequest = {},
+                onDismissRequest = { videoEditingHistoryVisible = false },
                 effectInfoList = mutableListOf()
             )
         }
 
         if (exportDialogVisible) {
             ExportDialog(
-                onDismissRequest = { exportDialogVisible = false }
+                onDismissRequest = { exportDialogVisible = false },
+                transformManager = TransformManager()
             )
         }
     }
@@ -337,6 +341,9 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
     var frames by remember { mutableLongStateOf(0) }
     var currentTime by remember { mutableLongStateOf(0L) }
     var currentFrame by remember { mutableLongStateOf(0L) }
+
+    // update current project info
+    viewModel.updateCurrentVideoProject(videoProject)
 
     Box(
         modifier = Modifier
@@ -578,7 +585,7 @@ private fun AppVideoPlayerControls(
                             modifier = Modifier
                                 .weight(2f, false),
                             color = Color.White,
-                            text = "${currentTime.formatMinSec()}/${duration.formatMinSec()}"
+                            text = "${currentTime.timeFormat()}/${duration.timeFormat()}"
                         )
                     }
 
@@ -628,17 +635,6 @@ private fun AppVideoPlayerControls(
     }
 }
 
-fun Long.formatMinSec(): String {
-    return if (this == 0L) {
-        "00:00"
-    } else {
-        String.format(
-            "%02d:%02d",
-            TimeUnit.MILLISECONDS.toMinutes(this),
-            TimeUnit.MILLISECONDS.toSeconds(this) -
-                    TimeUnit.MINUTES.toSeconds(
-                        TimeUnit.MILLISECONDS.toMinutes(this)
-                    )
-        )
-    }
-}
+fun Long.timeFormat(): String = LocalTime.of(0,0,0,0)
+    .plusSeconds(this / 1000)
+    .format(DateTimeFormatter.ofPattern("HH:mm:ss"))

@@ -1,7 +1,10 @@
 package com.lingfenglong.videoeditor
 
 import android.media.MediaFormat
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Switch
@@ -29,21 +33,33 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.transformer.Composition
+import androidx.media3.transformer.ExportException
+import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.ProgressHolder
+import androidx.media3.transformer.Transformer
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
+import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
+import kotlinx.coroutines.launch
 
 class Components {
 
@@ -71,12 +87,7 @@ class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectI
 @Composable
 fun VideoEditingHistory(
     onDismissRequest: () -> Unit = {},
-    effectInfoList: List<EffectInfo> = listOf(
-//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-//        EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
-    ),
+    effectInfoList: List<EffectInfo> = listOf(),
 ) {
     BasicAlertDialog(
         modifier = Modifier,
@@ -89,7 +100,9 @@ fun VideoEditingHistory(
             Column(modifier = Modifier.padding(12.dp)) {
                 Row {
                     Text(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
                         text = "视频编辑图层",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.headlineSmall
@@ -162,20 +175,22 @@ fun EffectInfoItem(
     }
 }
 
-class OnDismissRequestParameterParameterProvider : PreviewParameterProvider<() -> Unit> {
-    override val values: Sequence<() -> Unit>
-        get() = sequenceOf({})
-}
-
 /**
  * 导出对话框
  */
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 //@Preview(showSystemUi = true, showBackground = false)
 fun ExportDialog(
-    @PreviewParameter(OnDismissRequestParameterParameterProvider::class) onDismissRequest: () -> Unit,
+    onDismissRequest: () -> Unit,
+    transformManager: TransformManager
 ) {
+    val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val videoProject by viewModel.currentProject.collectAsState()
     var dropdownMenuExpand by remember { mutableStateOf(false) }
     val exportSettings by remember { mutableStateOf(ExportSettings.DEFAULT) }
     var exportName by remember { mutableStateOf(exportSettings.exportName) }
@@ -183,8 +198,10 @@ fun ExportDialog(
     var exportFormatText by remember { mutableStateOf("MP4") }
     var exportLossless by remember { mutableStateOf(exportSettings.lossless) }
 
-    // TODO: set the export name
-//    exportSettings.exportName = project.name
+    var currentProgress by remember { mutableFloatStateOf(0F) }
+    var loading by remember { mutableStateOf(false) }
+
+    exportSettings.exportName = videoProject.projectName
 
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
@@ -352,12 +369,87 @@ fun ExportDialog(
                         Text("取消")
                     }
                     TextButton(
-                        onClick = { TODO() }
+                        onClick = {
+                            loading = true
+                            onDismissRequest()
+                            scope.launch {
+                                val handler = Handler(Looper.getMainLooper())
+                                val progressHolder = ProgressHolder()
+                                val transformer = transformManager.transformer
+
+                                val progressRunnable = object : Runnable {
+                                    override fun run() {
+                                        val progressState = transformer.getProgress(progressHolder)
+
+                                        when (progressState) {
+                                            Transformer.PROGRESS_STATE_NOT_STARTED -> {
+
+                                            }
+                                            Transformer.PROGRESS_STATE_WAITING_FOR_AVAILABILITY -> {
+                                            }
+                                            Transformer.PROGRESS_STATE_AVAILABLE -> {
+                                                currentProgress = progressHolder.progress.toFloat()
+                                            }
+                                            Transformer.PROGRESS_STATE_UNAVAILABLE -> {
+                                            }
+                                        }
+
+                                        // 如果转换尚未完成，继续查询进度
+                                        if (progressState != Transformer.PROGRESS_STATE_NOT_STARTED) {
+                                            handler.postDelayed(this, 500) // 每 500ms 轮询一次
+                                        }
+                                    }
+                                }
+                                transformer.getProgress(progressHolder)
+                                transformer.addListener(object : Transformer.Listener {
+                                        override fun onCompleted(
+                                            composition: Composition,
+                                            exportResult: ExportResult,
+                                        ) {
+                                            super.onCompleted(composition, exportResult)
+                                            handler.removeCallbacks(progressRunnable)
+                                        }
+
+                                        override fun onError(
+                                            composition: Composition,
+                                            exportResult: ExportResult,
+                                            exportException: ExportException,
+                                        ) {
+                                            super.onError(
+                                                composition,
+                                                exportResult,
+                                                exportException
+                                            )
+                                            handler.removeCallbacks(progressRunnable)
+                                        }
+                                    })
+                                }
+                                transformManager.export(context, exportSettings)
+                        }
                     ) {
                         Text("确定")
                     }
                 }
             }
         }
+
+        if (loading) {
+            ProgressIndicator { currentProgress }
+        }
+    }
+}
+
+@Composable
+fun ProgressIndicator(
+    currentProgress: () -> Float
+) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LinearProgressIndicator(
+            progress = currentProgress,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

@@ -14,11 +14,11 @@ import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
 
 @UnstableApi
-class TransformManager {
-    private val projectInfo: VideoProject? = null
-
-    private var exoPlayer: ExoPlayer? = null
-    private lateinit var transformer: Transformer
+class TransformManager(
+    private val videoProject: VideoProject,
+    private val exoPlayer: ExoPlayer
+) {
+    lateinit var transformer: Transformer
     private val effectInfoList: MutableList<EffectInfo> = ArrayList()
     private val audioProcessor: MutableList<AudioProcessor> = ArrayList()
     private lateinit var trimmedMedia: MediaItem
@@ -37,7 +37,11 @@ class TransformManager {
             }
         }
 
-        val editedMediaItem = EditedMediaItem.Builder(trimmedMedia)
+        val mediaItem = MediaItem.Builder()
+            .setUri(videoProject.videoFileUri)
+            .build()
+
+        val editedMediaItem = EditedMediaItem.Builder(mediaItem)
             .setEffects(Effects(audioProcessor, effects))
             .setRemoveVideo(exportSettings.exportVideo.not())
             .setRemoveAudio(exportSettings.exportAudio.not())
