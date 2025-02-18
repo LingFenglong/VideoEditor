@@ -43,7 +43,6 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,7 +77,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
@@ -93,7 +91,6 @@ import com.lingfenglong.videoeditor.toObject
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeUnit
 
 class VideoEditingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,7 +124,7 @@ fun VideoEditingPage(videoProject: VideoProject) {
     )
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+
 @Composable
 fun AppVideoEditingTopBar() {
     var exportDialogVisible by remember { mutableStateOf(false) }
@@ -200,15 +197,14 @@ fun AppVideoEditingTopBar() {
 
         if (exportDialogVisible) {
             ExportDialog(
-                onDismissRequest = { exportDialogVisible = false },
-                transformManager = TransformManager()
+                onDismissRequest = { exportDialogVisible = false }
             )
         }
     }
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun AppToolFloatingButton() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
@@ -312,7 +308,7 @@ fun AppVideoEditingTool(videoEditingTool: VideoEditingTool) {
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
@@ -341,9 +337,13 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
     var frames by remember { mutableLongStateOf(0) }
     var currentTime by remember { mutableLongStateOf(0L) }
     var currentFrame by remember { mutableLongStateOf(0L) }
+    val transformManager = TransformManager(videoProject).also {
+        it.exoPlayer = player
+    }
 
     // update current project info
     viewModel.updateCurrentVideoProject(videoProject)
+    viewModel.updateTransformerManager(transformManager)
 
     Box(
         modifier = Modifier
@@ -358,7 +358,7 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
                     super.onAvailableCommandsChanged(availableCommands)
                 }
 
-                @androidx.annotation.OptIn(UnstableApi::class)
+                
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     when(playbackState) {
                         Player.STATE_READY -> {
@@ -369,7 +369,6 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
 
                 }
 
-                @androidx.annotation.OptIn(UnstableApi::class)
                 override fun onEvents(player2: Player, events: Player.Events) {
                     super.onEvents(player, events)
 

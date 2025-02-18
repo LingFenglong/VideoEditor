@@ -21,7 +21,6 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,7 +64,7 @@ class Components {
 
 }
 
-@UnstableApi
+
 class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectInfo>> {
     override val values: Sequence<List<EffectInfo>>
         get() = sequenceOf(
@@ -81,8 +80,8 @@ class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectI
 /**
  * 视频编辑图层
  */
-@UnstableApi
-@OptIn(ExperimentalMaterial3Api::class)
+
+
 @Preview(showSystemUi = false)
 @Composable
 fun VideoEditingHistory(
@@ -134,7 +133,7 @@ fun VideoEditingHistory(
     }
 }
 
-@UnstableApi
+
 class EffectInfoPreviewParameterProvider : PreviewParameterProvider<EffectInfo> {
     override val values: Sequence<EffectInfo>
         get() = sequenceOf(
@@ -143,7 +142,7 @@ class EffectInfoPreviewParameterProvider : PreviewParameterProvider<EffectInfo> 
 }
 
 
-@androidx.annotation.OptIn(UnstableApi::class)
+
 @Preview
 @Composable
 fun EffectInfoItem(
@@ -178,17 +177,15 @@ fun EffectInfoItem(
 /**
  * 导出对话框
  */
-@androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 //@Preview(showSystemUi = true, showBackground = false)
 fun ExportDialog(
-    onDismissRequest: () -> Unit,
-    transformManager: TransformManager
+    onDismissRequest: () -> Unit
 ) {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val transformManager by viewModel.transformerManager.collectAsState()
 
     val videoProject by viewModel.currentProject.collectAsState()
     var dropdownMenuExpand by remember { mutableStateOf(false) }
@@ -375,56 +372,9 @@ fun ExportDialog(
                             scope.launch {
                                 val handler = Handler(Looper.getMainLooper())
                                 val progressHolder = ProgressHolder()
-                                val transformer = transformManager.transformer
-
-                                val progressRunnable = object : Runnable {
-                                    override fun run() {
-                                        val progressState = transformer.getProgress(progressHolder)
-
-                                        when (progressState) {
-                                            Transformer.PROGRESS_STATE_NOT_STARTED -> {
-
-                                            }
-                                            Transformer.PROGRESS_STATE_WAITING_FOR_AVAILABILITY -> {
-                                            }
-                                            Transformer.PROGRESS_STATE_AVAILABLE -> {
-                                                currentProgress = progressHolder.progress.toFloat()
-                                            }
-                                            Transformer.PROGRESS_STATE_UNAVAILABLE -> {
-                                            }
-                                        }
-
-                                        // 如果转换尚未完成，继续查询进度
-                                        if (progressState != Transformer.PROGRESS_STATE_NOT_STARTED) {
-                                            handler.postDelayed(this, 500) // 每 500ms 轮询一次
-                                        }
-                                    }
-                                }
-                                transformer.getProgress(progressHolder)
-                                transformer.addListener(object : Transformer.Listener {
-                                        override fun onCompleted(
-                                            composition: Composition,
-                                            exportResult: ExportResult,
-                                        ) {
-                                            super.onCompleted(composition, exportResult)
-                                            handler.removeCallbacks(progressRunnable)
-                                        }
-
-                                        override fun onError(
-                                            composition: Composition,
-                                            exportResult: ExportResult,
-                                            exportException: ExportException,
-                                        ) {
-                                            super.onError(
-                                                composition,
-                                                exportResult,
-                                                exportException
-                                            )
-                                            handler.removeCallbacks(progressRunnable)
-                                        }
-                                    })
-                                }
                                 transformManager.export(context, exportSettings)
+                            }
+
                         }
                     ) {
                         Text("确定")

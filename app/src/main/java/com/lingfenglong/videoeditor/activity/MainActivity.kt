@@ -40,7 +40,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -212,7 +211,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    @OptIn(ExperimentalMaterial3Api::class)
+    
     fun AppTopBar(drawerState: DrawerState, scope: CoroutineScope) {
         CenterAlignedTopAppBar(
             title = {

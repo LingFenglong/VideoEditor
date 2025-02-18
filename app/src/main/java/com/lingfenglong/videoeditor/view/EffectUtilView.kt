@@ -84,9 +84,9 @@ import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
 class EffectUtilView {
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+
 //@Preview(showSystemUi = true)
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun TrimClipEffect() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
@@ -216,7 +216,7 @@ fun MergeEffect() {
 }
 
 //@Preview(showSystemUi = true)
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun CompressEffect() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
@@ -292,8 +292,7 @@ fun CompressEffect() {
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Preview(showSystemUi = true)
 @Composable
 fun WaterMarkEffect() {

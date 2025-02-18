@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <issue id="UnsafeOptInUsageError">
+        <option name="opt-in" value="androidx.media3.common.util.UnstableApi" />
+    </issue>
+    <issue id="UnsafeOptInUsageError">
+        <option name="opt-in" value="androidx.compose.material3.ExperimentalMaterial3Api" />
+    </issue>
+</lint>

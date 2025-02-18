@@ -3,21 +3,18 @@ package com.lingfenglong.videoeditor.viewmodel
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
+import com.lingfenglong.videoeditor.TransformManager
 import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
 import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
-import java.io.ObjectInputStream
 
 class VideoEditorViewModel(application: Application) : AndroidViewModel(application) {
     private val _videoProjectList = MutableStateFlow(ArrayList<VideoProject>())
@@ -28,6 +25,9 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _controlsVisible = MutableStateFlow(false)
     val controlsVisible: StateFlow<Boolean> = _controlsVisible.asStateFlow()
+
+    private val _transformerManager = MutableStateFlow(TransformManager.EMPTY)
+    val transformerManager: StateFlow<TransformManager> = _transformerManager.asStateFlow()
 
     private val _currentProject = MutableStateFlow(VideoProject.EMPTY)
     val currentProject: StateFlow<VideoProject> = _currentProject.asStateFlow()
@@ -126,5 +126,7 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-
+    fun updateTransformerManager(transformManager: TransformManager) {
+        _transformerManager.update { transformManager }
+    }
 }
