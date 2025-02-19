@@ -4,7 +4,6 @@ import android.media.MediaFormat
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,16 +48,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.transformer.Composition
-import androidx.media3.transformer.ExportException
-import androidx.media3.transformer.ExportResult
-import androidx.media3.transformer.ProgressHolder
-import androidx.media3.transformer.Transformer
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
-import kotlinx.coroutines.launch
 
 class Components {
 
@@ -196,7 +188,7 @@ fun ExportDialog(
     var exportLossless by remember { mutableStateOf(exportSettings.lossless) }
 
     var currentProgress by remember { mutableFloatStateOf(0F) }
-    var loading by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
 
     exportSettings.exportName = videoProject.projectName
 
@@ -367,14 +359,21 @@ fun ExportDialog(
                     }
                     TextButton(
                         onClick = {
-                            loading = true
+                            transformManager.export(context, exportSettings)
+                            exporting = true
                             onDismissRequest()
-                            scope.launch {
-                                val handler = Handler(Looper.getMainLooper())
-                                val progressHolder = ProgressHolder()
-                                transformManager.export(context, exportSettings)
-                            }
 
+                            val handler = Handler(Looper.getMainLooper())
+                            handler.postDelayed(
+                                object : Runnable {
+                                    override fun run() {
+                                        currentProgress = transformManager.getProgress()
+                                        if (currentProgress != 1F) {
+                                            handler.postDelayed(this, 100)
+                                        }
+                                    }
+                                }, 100L
+                            )
                         }
                     ) {
                         Text("确定")
@@ -383,7 +382,7 @@ fun ExportDialog(
             }
         }
 
-        if (loading) {
+        if (exporting) {
             ProgressIndicator { currentProgress }
         }
     }

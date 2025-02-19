@@ -52,6 +52,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -125,6 +126,7 @@ class MainActivity : AppCompatActivity() {
                 val scope = rememberCoroutineScope()
 
                 val projectList by viewModel.videoProjectList.collectAsState()
+                Log.i("project list", "updateVideoProjectList: $projectList")
 
                 AppNavigationDrawer(drawerState, pickMedia) {
                     Column {
@@ -192,7 +194,7 @@ class MainActivity : AppCompatActivity() {
                     format = mediaInformation.format,
                     effectInfoList = mutableListOf()
                 )
-                // save project info file
+                // save project info project.info
                 projectInfo.outputStream().use { fos ->
                     fos.write(Util.gson.toJson(videoProject).toByteArray())
                     fos.flush()
@@ -297,10 +299,17 @@ class MainActivity : AppCompatActivity() {
 fun VideoProjectItem(
     @PreviewParameter(provider = VideoProjectPreviewParameterProvider::class) videoProject: VideoProject
 ) {
+    // TODO
     if (File(videoProject.thumb).exists().not()) return
 
     LaunchedEffect(key1 = videoProject) {
 
+    }
+    DisposableEffect(key1 = videoProject) {
+
+        onDispose {
+
+        }
     }
 
     val context = LocalContext.current
@@ -492,7 +501,6 @@ fun VideoProjectDetailDialog(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.removeVideoProject(videoProject)
-                    viewModel.updateVideoProjectList(context)
                     onDismissRequest()
                     deleteDialogVisibility = false
                 }) {

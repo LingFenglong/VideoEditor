@@ -3,18 +3,15 @@ package com.lingfenglong.videoeditor
 import android.content.Context
 import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.AudioProcessor
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
-import androidx.media3.transformer.ExportException
-import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
-import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
+import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 
 class TransformManager(
     private val videoProject: VideoProject,
@@ -66,53 +63,6 @@ class TransformManager(
 //            .setEffects()
 //            .build()
 
-        val progressRunnable = object : Runnable {
-            override fun run() {
-                val progressState = transformer.getProgress(progressHolder)
-
-                when (progressState) {
-                    Transformer.PROGRESS_STATE_NOT_STARTED -> {
-
-                    }
-                    Transformer.PROGRESS_STATE_WAITING_FOR_AVAILABILITY -> {
-                    }
-                    Transformer.PROGRESS_STATE_AVAILABLE -> {
-                        currentProgress = progressHolder.progress.toFloat()
-                    }
-                    Transformer.PROGRESS_STATE_UNAVAILABLE -> {
-                    }
-                }
-
-                // 如果转换尚未完成，继续查询进度
-                if (progressState != Transformer.PROGRESS_STATE_NOT_STARTED) {
-                    handler.postDelayed(this, 500) // 每 500ms 轮询一次
-                }
-            }
-        }
-        transformer.getProgress(progressHolder)
-        transformer.addListener(object : Transformer.Listener {
-            override fun onCompleted(
-                composition: Composition,
-                exportResult: ExportResult,
-            ) {
-                super.onCompleted(composition, exportResult)
-                handler.removeCallbacks(progressRunnable)
-            }
-
-            override fun onError(
-                composition: Composition,
-                exportResult: ExportResult,
-                exportException: ExportException,
-            ) {
-                super.onError(
-                    composition,
-                    exportResult,
-                    exportException
-                )
-                handler.removeCallbacks(progressRunnable)
-            }
-        })
-
         transformer.start(editedMediaItem, exportSettings.exportPath)
     }
 
@@ -124,11 +74,21 @@ class TransformManager(
     }
 
     private fun updateVideoEffect() {
-        exoPlayer?.apply {
+        exoPlayer.apply {
             stop()
             setVideoEffects(getEffects())
             prepare()
         }
     }
 
+    fun getProgress(): Float {
+        val progressHolder = ProgressHolder()
+
+        return when(transformer.getProgress(progressHolder)) {
+            Transformer.PROGRESS_STATE_UNAVAILABLE -> -1F
+            Transformer.PROGRESS_STATE_NOT_STARTED -> 0F
+            Transformer.PROGRESS_STATE_AVAILABLE -> progressHolder.progress / 100F
+            else -> throw RuntimeException("导出进度异常")
+        }
+    }
 }

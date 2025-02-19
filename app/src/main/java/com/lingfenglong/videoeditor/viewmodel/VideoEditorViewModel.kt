@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.lingfenglong.videoeditor.TransformManager
 import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
@@ -14,10 +15,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.io.File
 
 class VideoEditorViewModel(application: Application) : AndroidViewModel(application) {
-    private val _videoProjectList = MutableStateFlow(ArrayList<VideoProject>())
+    private val _videoProjectList = MutableStateFlow<MutableList<VideoProject>>(mutableListOf())
     val videoProjectList = _videoProjectList.asStateFlow()
 
     private val _magicToolButtonVisible = MutableStateFlow(true)
@@ -67,7 +69,9 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
     fun removeVideoProject(videoProject: VideoProject) {
         _videoProjectList.update {
             it.remove(videoProject)
-            File(videoProject.projectFilePath).deleteRecursively()
+            viewModelScope.launch {
+                File(videoProject.projectFilePath).deleteRecursively()
+            }
             it
         }
     }
