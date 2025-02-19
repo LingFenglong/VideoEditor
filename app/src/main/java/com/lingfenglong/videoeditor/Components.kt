@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.MimeTypes
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
@@ -279,10 +280,10 @@ fun ExportDialog(
                             onDismissRequest = { dropdownMenuExpand = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(text = "MP4") },
+                                text = { Text(text = "H263") },
                                 onClick = {
-                                    exportFormatText = "MP4"
-                                    exportFormat = MediaFormat.MIMETYPE_VIDEO_MPEG4
+                                    exportFormatText = "H263"
+                                    exportFormat = MimeTypes.VIDEO_H263
                                     dropdownMenuExpand = false
                                     // TODO: set the export name
                                     //    exportSettings.exportName = project.name
@@ -290,10 +291,10 @@ fun ExportDialog(
                             )
 
                             DropdownMenuItem(
-                                text = { Text(text = "HEVC") },
+                                text = { Text(text = "H263") },
                                 onClick = {
-                                    exportFormatText = "HEVC"
-                                    exportFormat = MediaFormat.MIMETYPE_VIDEO_HEVC
+                                    exportFormatText = "H264"
+                                    exportFormat = MimeTypes.VIDEO_H264
                                     dropdownMenuExpand = false
                                     // TODO: set the export name
                                     //    exportSettings.exportName = project.name
@@ -301,10 +302,10 @@ fun ExportDialog(
                             )
 
                             DropdownMenuItem(
-                                text = { Text(text = "AVC") },
+                                text = { Text(text = "H265") },
                                 onClick = {
-                                    exportFormatText = "AVC"
-                                    exportFormat = MediaFormat.MIMETYPE_VIDEO_AVC
+                                    exportFormatText = "H265"
+                                    exportFormat = MimeTypes.VIDEO_H265
                                     dropdownMenuExpand = false
                                     // TODO: set the export name
                                     //    exportSettings.exportName = project.name
@@ -312,10 +313,10 @@ fun ExportDialog(
                             )
 
                             DropdownMenuItem(
-                                text = { Text(text = "AVC1") },
+                                text = { Text(text = "MP4V") },
                                 onClick = {
-                                    exportFormatText = "AVC1"
-                                    exportFormat = MediaFormat.MIMETYPE_VIDEO_AV1
+                                    exportFormatText = "MP4V"
+                                    exportFormat = MimeTypes.VIDEO_MP4V
                                     dropdownMenuExpand = false
                                     // TODO: set the export name
                                     //    exportSettings.exportName = project.name

@@ -2,6 +2,7 @@ package com.lingfenglong.videoeditor.entity
 
 import android.media.MediaFormat
 import android.os.Environment
+import androidx.media3.common.MimeTypes
 import java.time.Instant
 
 data class ExportSettings(
@@ -20,8 +21,11 @@ data class ExportSettings(
             exportPath = Environment.getExternalStorageDirectory().absolutePath + "/Movies",
             exportName = Instant.now().nano.toString() + ".mp4",
             lossless = false,
-            videoMimeType = MediaFormat.MIMETYPE_VIDEO_MPEG4,
-            audioMimeType = MediaFormat.MIMETYPE_AUDIO_MPEGH_LC_L3,
+            videoMimeType = MimeTypes.VIDEO_MP4V,
+            audioMimeType = MimeTypes.AUDIO_AAC,
+//MimeTypes.AUDIO_AAC
+//MimeTypes.AUDIO_AMR_NB
+//MimeTypes.AUDIO_AMR_WB
             exportVideo = true,
             exportAudio = true,
             speed = 1F,

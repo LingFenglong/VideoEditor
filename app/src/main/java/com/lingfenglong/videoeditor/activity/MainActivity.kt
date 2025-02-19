@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                     Column {
                         AppTopBar(drawerState, scope)
                         LazyColumn {
-                            items(projectList) {
+                            items(projectList, { it.videoFileUri }) {
                                 VideoProjectItem(it)
                             }
                         }
@@ -213,7 +213,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    
     fun AppTopBar(drawerState: DrawerState, scope: CoroutineScope) {
         CenterAlignedTopAppBar(
             title = {
@@ -244,7 +243,6 @@ class MainActivity : AppCompatActivity() {
             },
         )
     }
-
 
     @Composable
     fun AppNavigationDrawer(
@@ -299,19 +297,6 @@ class MainActivity : AppCompatActivity() {
 fun VideoProjectItem(
     @PreviewParameter(provider = VideoProjectPreviewParameterProvider::class) videoProject: VideoProject
 ) {
-    // TODO
-    if (File(videoProject.thumb).exists().not()) return
-
-    LaunchedEffect(key1 = videoProject) {
-
-    }
-    DisposableEffect(key1 = videoProject) {
-
-        onDispose {
-
-        }
-    }
-
     val context = LocalContext.current
     var videoProjectDialogVisible by remember { mutableStateOf(false) }
 

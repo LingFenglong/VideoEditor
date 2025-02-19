@@ -1,10 +1,12 @@
 package com.lingfenglong.videoeditor
 
 import android.content.Context
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.transformer.DefaultMuxer
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ProgressHolder
@@ -53,7 +55,7 @@ class TransformManager(
         transformer = Transformer.Builder(context)
             .setVideoMimeType(exportSettings.videoMimeType)
             .setAudioMimeType(exportSettings.audioMimeType)
-//            .setMuxerFactory() TODO
+            .setMuxerFactory(DefaultMuxer.Factory())
 //            .addListener()
             .build()
 //            .start()
@@ -63,7 +65,10 @@ class TransformManager(
 //            .setEffects()
 //            .build()
 
-        transformer.start(editedMediaItem, exportSettings.exportPath)
+//        context.contentResolver.openFileDescriptor((exportSettings.exportPath + "/" + exportSettings.exportName).toUri(), "rw")?.use {
+//            transformer.start
+//        }
+            transformer.start(editedMediaItem, exportSettings.exportPath + "/" + exportSettings.exportName)
     }
 
     private fun getEffects() = effectInfoList.map { it.effect() }.toMutableList()
@@ -87,8 +92,7 @@ class TransformManager(
         return when(transformer.getProgress(progressHolder)) {
             Transformer.PROGRESS_STATE_UNAVAILABLE -> -1F
             Transformer.PROGRESS_STATE_NOT_STARTED -> 0F
-            Transformer.PROGRESS_STATE_AVAILABLE -> progressHolder.progress / 100F
-            else -> throw RuntimeException("导出进度异常")
+            else -> progressHolder.progress / 100F
         }
     }
 }

@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class VideoEditorViewModel(application: Application) : AndroidViewModel(application) {
-    private val _videoProjectList = MutableStateFlow<MutableList<VideoProject>>(mutableListOf())
+    private val _videoProjectList = MutableStateFlow<List<VideoProject>>(mutableListOf())
     val videoProjectList = _videoProjectList.asStateFlow()
 
     private val _magicToolButtonVisible = MutableStateFlow(true)
@@ -60,45 +60,27 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun addVideoProject(videoProject: VideoProject) {
-        _videoProjectList.update {
-            it.add(videoProject)
-            it
-        }
+        _videoProjectList.update { it + videoProject }
     }
 
     fun removeVideoProject(videoProject: VideoProject) {
-        _videoProjectList.update {
-            it.remove(videoProject)
-            viewModelScope.launch {
-                File(videoProject.projectFilePath).deleteRecursively()
-            }
-            it
-        }
+        _videoProjectList.update { viewModelScope.launch { File(videoProject.projectFilePath).deleteRecursively() }; it - videoProject }
     }
 
     fun clearVideoProjectList(videoProject: VideoProject) {
-        _videoProjectList.update {
-            ArrayList()
-        }
+        _videoProjectList.update { emptyList() }
     }
 
     fun updateVideoProjectList(context: Context) {
         _videoProjectList.update {
-            val projectList = File("${context.dataDir}/${Constants.PROJECTS_BASE_DIR}")
+            File("${context.dataDir}/${Constants.PROJECTS_BASE_DIR}")
                 .listFiles()
                 ?.map { dir ->
                     Util.gson.fromJson(
                         File(dir, Constants.PROJECT_INFO).inputStream().reader(),
                         VideoProject::class.java
                     )
-                }
-
-            if (projectList == null) {
-                it.clear()
-                it
-            } else {
-                projectList as ArrayList<VideoProject>
-            }
+                } ?: emptyList()
         }
 
         Log.i("project list", "updateVideoProjectList: ${_videoProjectList.value}")
