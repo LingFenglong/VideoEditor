@@ -10,7 +10,6 @@ import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
 import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
-import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,9 +29,6 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _transformerManager = MutableStateFlow(TransformManager.EMPTY)
     val transformerManager: StateFlow<TransformManager> = _transformerManager.asStateFlow()
-
-    private val _currentProject = MutableStateFlow(VideoProject.EMPTY)
-    val currentProject: StateFlow<VideoProject> = _currentProject.asStateFlow()
 
     private val _isVideoPlaying = MutableStateFlow(true)
     val isVideoPlaying: StateFlow<Boolean> = _isVideoPlaying.asStateFlow()
@@ -99,18 +95,18 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun updateCurrentVideoProject(videoProject: VideoProject) {
-        _currentProject.update {
-            videoProject
+        _transformerManager.update {
+            transformerManager
         }
     }
-
-    fun addEffectInfo(effectInfo: EffectInfo) {
-        _currentProject.update {
-            it.effectInfoList.add(effectInfo)
-            Log.i("EffectInfo", "current video project effectInfo: ${it.effectInfoList}")
-            it
-        }
-    }
+//
+//    fun addEffectInfo(effectInfo: EffectInfo) {
+//        _currentProject.update {
+//            it.effectInfoList.add(effectInfo)
+//            Log.i("EffectInfo", "current video project effectInfo: ${it.effectInfoList}")
+//            it
+//        }
+//    }
 
     fun updateTransformerManager(transformManager: TransformManager) {
         _transformerManager.update { transformManager }

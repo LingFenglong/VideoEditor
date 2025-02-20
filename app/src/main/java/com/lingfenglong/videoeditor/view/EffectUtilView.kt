@@ -1,6 +1,5 @@
 package com.lingfenglong.videoeditor.view
 
-import android.app.Dialog
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import androidx.compose.foundation.background
@@ -28,7 +27,6 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,7 +59,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.GenericFontFamily
@@ -72,10 +69,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.TextOverlay
-import androidx.media3.effect.TextureOverlay
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
@@ -297,6 +292,7 @@ fun CompressEffect() {
 @Composable
 fun WaterMarkEffect() {
     val viewModel = viewModel(modelClass =  VideoEditorViewModel::class)
+    val transformManager by viewModel.transformerManager.collectAsState()
 
     var text by remember { mutableStateOf("Text") }
     var fontSize by remember { mutableIntStateOf(12) }

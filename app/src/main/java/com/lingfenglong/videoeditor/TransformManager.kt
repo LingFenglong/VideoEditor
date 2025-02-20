@@ -1,7 +1,9 @@
 package com.lingfenglong.videoeditor
 
 import android.content.Context
-import androidx.core.net.toUri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.effect.SpeedChangeEffect
@@ -15,11 +17,11 @@ import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 
-class TransformManager(
-    private val videoProject: VideoProject,
-) {
+class TransformManager(videoProject: VideoProject) {
+    var videoProject: VideoProject by mutableStateOf(videoProject)
+
     lateinit var exoPlayer: ExoPlayer
-    lateinit var transformer: Transformer
+    private lateinit var transformer: Transformer
     private val effectInfoList: MutableList<EffectInfo> = ArrayList()
     private val audioProcessor: MutableList<AudioProcessor> = ArrayList()
     private lateinit var trimmedMedia: MediaItem
@@ -68,7 +70,7 @@ class TransformManager(
 //        context.contentResolver.openFileDescriptor((exportSettings.exportPath + "/" + exportSettings.exportName).toUri(), "rw")?.use {
 //            transformer.start
 //        }
-            transformer.start(editedMediaItem, exportSettings.exportPath + "/" + exportSettings.exportName)
+        transformer.start(editedMediaItem, exportSettings.exportPath + "/" + exportSettings.exportName)
     }
 
     private fun getEffects() = effectInfoList.map { it.effect() }.toMutableList()

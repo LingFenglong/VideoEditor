@@ -48,6 +48,7 @@ android {
         jvmTarget = "1.8"
         allWarningsAsErrors = false
         freeCompilerArgs += "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+        freeCompilerArgs += "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
     }
 
 }

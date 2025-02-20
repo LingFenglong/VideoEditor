@@ -77,6 +77,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
@@ -309,6 +310,7 @@ fun AppVideoEditingTool(videoEditingTool: VideoEditingTool) {
 }
 
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
@@ -369,6 +371,7 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
 
                 }
 
+                @androidx.annotation.OptIn(UnstableApi::class)
                 override fun onEvents(player2: Player, events: Player.Events) {
                     super.onEvents(player, events)
 
