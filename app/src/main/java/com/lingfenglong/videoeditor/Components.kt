@@ -178,9 +178,9 @@ fun ExportDialog(
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val transformManager by viewModel.transformerManager.collectAsState()
 
-    val videoProject by viewModel.currentProject.collectAsState()
+    val transformManager = viewModel.transformManager
+
     var dropdownMenuExpand by remember { mutableStateOf(false) }
     val exportSettings by remember { mutableStateOf(ExportSettings.DEFAULT) }
     var exportName by remember { mutableStateOf(exportSettings.exportName) }
@@ -191,7 +191,7 @@ fun ExportDialog(
     var currentProgress by remember { mutableFloatStateOf(0F) }
     var exporting by remember { mutableStateOf(false) }
 
-    exportSettings.exportName = videoProject.projectName
+    exportSettings.exportName = transformManager.videoProject.projectName
 
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
@@ -291,7 +291,7 @@ fun ExportDialog(
                             )
 
                             DropdownMenuItem(
-                                text = { Text(text = "H263") },
+                                text = { Text(text = "H264") },
                                 onClick = {
                                     exportFormatText = "H264"
                                     exportFormat = MimeTypes.VIDEO_H264

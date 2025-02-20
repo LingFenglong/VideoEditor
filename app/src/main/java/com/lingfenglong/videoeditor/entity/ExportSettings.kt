@@ -23,9 +23,6 @@ data class ExportSettings(
             lossless = false,
             videoMimeType = MimeTypes.VIDEO_MP4V,
             audioMimeType = MimeTypes.AUDIO_AAC,
-//MimeTypes.AUDIO_AAC
-//MimeTypes.AUDIO_AMR_NB
-//MimeTypes.AUDIO_AMR_WB
             exportVideo = true,
             exportAudio = true,
             speed = 1F,

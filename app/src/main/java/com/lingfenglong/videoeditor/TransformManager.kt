@@ -2,6 +2,7 @@ package com.lingfenglong.videoeditor
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.media3.common.MediaItem
@@ -17,13 +18,16 @@ import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 
-class TransformManager(videoProject: VideoProject) {
+class TransformManager(
+    videoProject: VideoProject,
+) {
     var videoProject: VideoProject by mutableStateOf(videoProject)
-
     lateinit var exoPlayer: ExoPlayer
+
     private lateinit var transformer: Transformer
-    private val effectInfoList: MutableList<EffectInfo> = ArrayList()
-    private val audioProcessor: MutableList<AudioProcessor> = ArrayList()
+
+    private val effectInfoList: MutableList<EffectInfo> = mutableStateListOf()
+    private val audioProcessor: MutableList<AudioProcessor> = mutableStateListOf()
     private lateinit var trimmedMedia: MediaItem
 
     companion object {

@@ -339,13 +339,14 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
     var frames by remember { mutableLongStateOf(0) }
     var currentTime by remember { mutableLongStateOf(0L) }
     var currentFrame by remember { mutableLongStateOf(0L) }
+
     val transformManager = TransformManager(videoProject).also {
         it.exoPlayer = player
+
+        // update transform manager in view model
+        viewModel.transformManager = it
     }
 
-    // update current project info
-    viewModel.updateCurrentVideoProject(videoProject)
-    viewModel.updateTransformerManager(transformManager)
 
     Box(
         modifier = Modifier
@@ -483,7 +484,7 @@ private fun AppVideoPlayerControls(
     val viewModel = viewModel(VideoEditorViewModel::class)
     val controlsVisible by viewModel.controlsVisible.collectAsState()
     val currentPosition by viewModel.videoCurrentPosition.collectAsState()
-    val currentProject by viewModel.currentProject.collectAsState()
+    val currentProject = remember { viewModel.transformManager.videoProject }
 
     val isVideoPlaying = remember(videoPlayerControlsStates.isPlaying()) {videoPlayerControlsStates.isPlaying() }
     val currentTime = remember(videoPlayerControlsStates.currentTime()) {videoPlayerControlsStates.currentTime() }

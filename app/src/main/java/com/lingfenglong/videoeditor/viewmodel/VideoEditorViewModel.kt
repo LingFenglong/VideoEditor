@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class VideoEditorViewModel(application: Application) : AndroidViewModel(application) {
+    var transformManager: TransformManager = TransformManager.EMPTY
+
     private val _videoProjectList = MutableStateFlow<List<VideoProject>>(mutableListOf())
     val videoProjectList = _videoProjectList.asStateFlow()
 
@@ -26,9 +28,6 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _controlsVisible = MutableStateFlow(false)
     val controlsVisible: StateFlow<Boolean> = _controlsVisible.asStateFlow()
-
-    private val _transformerManager = MutableStateFlow(TransformManager.EMPTY)
-    val transformerManager: StateFlow<TransformManager> = _transformerManager.asStateFlow()
 
     private val _isVideoPlaying = MutableStateFlow(true)
     val isVideoPlaying: StateFlow<Boolean> = _isVideoPlaying.asStateFlow()
@@ -94,11 +93,11 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
         _currentVideoInfo.update { videoInfo }
     }
 
-    fun updateCurrentVideoProject(videoProject: VideoProject) {
-        _transformerManager.update {
-            transformerManager
-        }
-    }
+//    fun updateCurrentVideoProject(videoProject: VideoProject) {
+//        _transformerManager.update {
+//            transformerManager
+//        }
+//    }
 //
 //    fun addEffectInfo(effectInfo: EffectInfo) {
 //        _currentProject.update {
@@ -108,7 +107,7 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
 //        }
 //    }
 
-    fun updateTransformerManager(transformManager: TransformManager) {
-        _transformerManager.update { transformManager }
-    }
+//    fun updateTransformerManager(transformManager: TransformManager) {
+//        _transformerManager.update { transformManager }
+//    }
 }

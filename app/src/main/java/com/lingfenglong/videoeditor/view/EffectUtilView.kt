@@ -292,7 +292,7 @@ fun CompressEffect() {
 @Composable
 fun WaterMarkEffect() {
     val viewModel = viewModel(modelClass =  VideoEditorViewModel::class)
-    val transformManager by viewModel.transformerManager.collectAsState()
+    val transformManager = viewModel.transformManager
 
     var text by remember { mutableStateOf("Text") }
     var fontSize by remember { mutableIntStateOf(12) }
@@ -530,8 +530,8 @@ fun WaterMarkEffect() {
                         }
                         TextButton(
                             onClick = {
-                                viewModel.addEffectInfo(WaterMarkEffectInfo(effect = { OverlayEffect(listOf(TextOverlay.createStaticBitmapOverlay(
-                                Bitmap.createBitmap(1,1, Bitmap.Config.RGBA_F16)))) }))
+//                                viewModel.addEffectInfo(WaterMarkEffectInfo(effect = { OverlayEffect(listOf(TextOverlay.createStaticBitmapOverlay(
+//                                Bitmap.createBitmap(1,1, Bitmap.Config.RGBA_F16)))) }))
                                 dialogVisible = false
                             }
                         ) {
