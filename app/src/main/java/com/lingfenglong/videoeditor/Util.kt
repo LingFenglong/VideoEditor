@@ -29,3 +29,5 @@ fun getFileNameAndExtFromUri(context: Context, uri: Uri): String {
     }
     return "null"
 }
+
+fun Float.withPrecision(precision: Int) = "%.${precision}f".format(this)
