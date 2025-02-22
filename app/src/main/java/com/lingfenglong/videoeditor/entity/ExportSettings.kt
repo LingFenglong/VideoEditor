@@ -1,6 +1,5 @@
 package com.lingfenglong.videoeditor.entity
 
-import android.media.MediaFormat
 import android.os.Environment
 import androidx.media3.common.MimeTypes
 import java.time.Instant

@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import com.google.gson.Gson
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 class Util {
     companion object {
@@ -29,3 +31,7 @@ fun getFileNameAndExtFromUri(context: Context, uri: Uri): String {
     }
     return "null"
 }
+
+fun Long.timeFormat(): String = LocalTime.of(0,0,0,0)
+    .plusSeconds(this / 1000)
+    .format(DateTimeFormatter.ofPattern("HH:mm:ss"))

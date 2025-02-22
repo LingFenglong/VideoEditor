@@ -22,7 +22,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VideoEditor"
-        tools:targetApi="31"
         android:requestLegacyExternalStorage="true">
         <activity
             android:name=".activity.VideoEditingActivity"

@@ -1,7 +1,9 @@
 package com.lingfenglong.videoeditor.activity
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
@@ -9,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.FileUtils
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
@@ -84,6 +87,7 @@ import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.getFileNameAndExtFromUri
+import com.lingfenglong.videoeditor.timeFormat
 import com.lingfenglong.videoeditor.toJson
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -97,6 +101,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+                if (it) {
+                    recreate()
+                } else {
+                    val text = "permission_denied_grant_video_permissions"
+                    val duration = Toast.LENGTH_SHORT
+                    val toast = Toast.makeText(this, text, duration)
+                    toast.show()
+                }
+            }
+        if (checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermission.launch(Manifest.permission.READ_MEDIA_VIDEO)
+        } else {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
 
         val vm = VideoEditorViewModel(application)
         vm.updateVideoProjectList(this)

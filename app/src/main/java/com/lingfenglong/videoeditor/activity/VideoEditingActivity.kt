@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
@@ -15,24 +16,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.ReadMore
@@ -53,6 +49,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -88,6 +85,7 @@ import com.lingfenglong.videoeditor.constant.VideoEditingTools
 import com.lingfenglong.videoeditor.entity.VideoEditingTool
 import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
+import com.lingfenglong.videoeditor.timeFormat
 import com.lingfenglong.videoeditor.toObject
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
 import java.time.LocalTime
@@ -116,8 +114,10 @@ fun VideoEditingPage(videoProject: VideoProject) {
             AppVideoEditingTopBar()
         },
         content = {
-            VideoPlayer(videoProject, it)
-            AppToolFloatingButton()
+            Column {
+                Spacer(modifier = Modifier.padding(top = it.calculateTopPadding()))
+                VideoPlayer(videoProject)
+            }
         },
         bottomBar = {
 
@@ -125,86 +125,73 @@ fun VideoEditingPage(videoProject: VideoProject) {
     )
 }
 
-
 @Composable
 fun AppVideoEditingTopBar() {
     var exportDialogVisible by remember { mutableStateOf(false) }
     var videoEditingHistoryVisible by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            colors = IconButtonDefaults.iconButtonColors(),
-            onClick = {
+    val viewModel = viewModel(modelClass = VideoEditorViewModel::class)
 
+    // TODO
+    val videoProjectName by remember { mutableStateOf(viewModel.transformManager.videoProject.projectName) }
+
+    val activity = LocalActivity.current
+
+    TopAppBar(
+        title = { Text(text = videoProjectName) },
+        navigationIcon = {
+            IconButton(
+                onClick = { activity?.onBackPressed() }
+            ) {
+                Icon(
+                    modifier = Modifier.size(20.dp),
+                    painter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.ArrowBack),
+                    contentDescription = "返回"
+                )
             }
-        ) {
-            Icon(
-                tint = Color.Black,
-                painter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.ArrowBack),
-                contentDescription = "后退"
-            )
-        }
-
-        IconButton(
-            colors = IconButtonDefaults.iconButtonColors(),
-            onClick = {
-
+        },
+        actions = {
+            IconButton(
+                colors = IconButtonDefaults.iconButtonColors(),
+                onClick = {
+                    videoEditingHistoryVisible = true
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.size(20.dp),
+                    painter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.ReadMore),
+                    contentDescription = "图层"
+                )
             }
-        ) {
-            Icon(
-                tint = Color.Black,
-                painter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.ArrowForward),
-                contentDescription = "前进"
-            )
-        }
 
-        IconButton(
-            colors = IconButtonDefaults.iconButtonColors(),
-            onClick = {
-                videoEditingHistoryVisible = true
+            IconButton(
+                colors = IconButtonDefaults.iconButtonColors(),
+                onClick = {
+                    exportDialogVisible = true
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.size(20.dp),
+                    painter = rememberVectorPainter(image = Icons.Default.Save),
+                    contentDescription = "保存"
+                )
             }
-        ) {
-            Icon(
-                tint = Color.Black,
-                painter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.ReadMore),
-                contentDescription = "图层"
-            )
         }
+    )
 
-        IconButton(
-            colors = IconButtonDefaults.iconButtonColors(),
-            onClick = {
-                exportDialogVisible = true
-            }
-        ) {
-            Icon(
-                tint = Color.Black,
-                painter = rememberVectorPainter(image = Icons.Default.Save),
-                contentDescription = "保存"
-            )
-        }
+    if (videoEditingHistoryVisible) {
+        VideoEditingHistory(
+            onDismissRequest = { videoEditingHistoryVisible = false },
+            effectInfoList = mutableListOf()
+        )
+    }
 
-        if (videoEditingHistoryVisible) {
-            VideoEditingHistory(
-                onDismissRequest = { videoEditingHistoryVisible = false },
-                effectInfoList = mutableListOf()
-            )
-        }
-
-        if (exportDialogVisible) {
-            ExportDialog(
-                onDismissRequest = { exportDialogVisible = false }
-            )
-        }
+    if (exportDialogVisible) {
+        ExportDialog(
+            onDismissRequest = { exportDialogVisible = false }
+        )
     }
 }
-
-
 
 @Composable
 fun AppToolFloatingButton() {
@@ -309,11 +296,8 @@ fun AppVideoEditingTool(videoEditingTool: VideoEditingTool) {
     }
 }
 
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
+fun VideoPlayer(videoProject: VideoProject) {
     val context = LocalContext.current
 
     val player = remember {
@@ -347,12 +331,8 @@ fun VideoPlayer(videoProject: VideoProject, paddingValues: PaddingValues) {
         viewModel.transformManager = it
     }
 
-
-    Box(
-        modifier = Modifier
-            .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
-            .padding(top = paddingValues.calculateTopPadding())
-    ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        AppToolFloatingButton()
 
         DisposableEffect(key1 = Unit) {
             val listenerHandler = Handler(Looper.getMainLooper())
@@ -637,7 +617,3 @@ private fun AppVideoPlayerControls(
         }
     }
 }
-
-fun Long.timeFormat(): String = LocalTime.of(0,0,0,0)
-    .plusSeconds(this / 1000)
-    .format(DateTimeFormatter.ofPattern("HH:mm:ss"))

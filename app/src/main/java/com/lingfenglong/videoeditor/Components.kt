@@ -171,7 +171,6 @@ fun EffectInfoItem(
  * 导出对话框
  */
 @Composable
-//@Preview(showSystemUi = true, showBackground = false)
 fun ExportDialog(
     onDismissRequest: () -> Unit
 ) {
@@ -362,7 +361,7 @@ fun ExportDialog(
                         onClick = {
                             transformManager.export(context, exportSettings)
                             exporting = true
-                            onDismissRequest()
+//                            onDismissRequest()
 
                             val handler = Handler(Looper.getMainLooper())
                             handler.postDelayed(
