@@ -1,12 +1,13 @@
 package com.lingfenglong.videoeditor
 
-import android.media.MediaFormat
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -31,7 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,38 +46,24 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MimeTypes
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class Components {
 
-}
-
-
-class EffectListPreviewParameterProvider : PreviewParameterProvider<List<EffectInfo>> {
-    override val values: Sequence<List<EffectInfo>>
-        get() = sequenceOf(
-            listOf(
-//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) }),
-//                EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F, 1F, 1F) })
-            )
-        )
 }
 
 /**
  * 视频编辑图层
  */
 
-
-@Preview(showSystemUi = false)
 @Composable
 fun VideoEditingHistory(
     onDismissRequest: () -> Unit = {},
@@ -126,20 +114,9 @@ fun VideoEditingHistory(
     }
 }
 
-
-class EffectInfoPreviewParameterProvider : PreviewParameterProvider<EffectInfo> {
-    override val values: Sequence<EffectInfo>
-        get() = sequenceOf(
-//            EffectInfo("裁剪", { Icons.Filled.Crop }, { Crop(1F, 1F,1F,1F) })
-        )
-}
-
-
-
-@Preview
 @Composable
 fun EffectInfoItem(
-    @PreviewParameter(provider = EffectInfoPreviewParameterProvider::class) effectInfo: EffectInfo,
+    effectInfo: EffectInfo,
 ) {
     Row (
         modifier = Modifier
@@ -383,22 +360,78 @@ fun ExportDialog(
         }
 
         if (exporting) {
-            ProgressIndicator { currentProgress }
+//            ProgressIndicator { currentProgress }
         }
     }
 }
 
 @Composable
-fun ProgressIndicator(
-    currentProgress: () -> Float
+fun ProgressIndicatorDialog(
+    currentProgress: () -> Float,
+    onDismissRequest: () -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        LinearProgressIndicator(
-            progress = currentProgress,
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        Column(
             modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    progress = currentProgress,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "${(currentProgress() * 100).withPrecision(2)}/100"
+                )
+            }
+        }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun ProgressIndicatorPreview() {
+    var currentProgress by remember { mutableFloatStateOf(0F) }
+    var dialogVisibility by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(dialogVisibility) {
+        if (dialogVisibility) {
+            coroutineScope.launch {
+                while (dialogVisibility && currentProgress < 1F) {
+                    currentProgress += 0.01F
+                    delay(100)
+                }
+            }
+        } else {
+            currentProgress = 0F
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        ExtendedFloatingActionButton(onClick = { dialogVisibility = true; currentProgress = 0F }) {
+            Text(text = "Button")
+        }
+    }
+
+    if (dialogVisibility) {
+        ProgressIndicatorDialog(
+            currentProgress = { currentProgress },
+            onDismissRequest = { dialogVisibility = false }
         )
     }
 }
