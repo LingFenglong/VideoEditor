@@ -85,6 +85,7 @@ import com.arthenica.ffmpegkit.FFprobeKit
 import com.lingfenglong.videoeditor.R
 import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
+import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.getFileNameAndExtFromUri
 import com.lingfenglong.videoeditor.timeFormat
@@ -102,23 +103,24 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-                if (it) {
-                    recreate()
-                } else {
-                    val text = "permission_denied_grant_video_permissions"
-                    val duration = Toast.LENGTH_SHORT
-                    val toast = Toast.makeText(this, text, duration)
-                    toast.show()
-                }
-            }
-        if (checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermission.launch(Manifest.permission.READ_MEDIA_VIDEO)
-        } else {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        }
+        // TODO delete this
+//        val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+//                if (it) {
+//                    recreate()
+//                } else {
+//                    val text = "permission_denied_grant_video_permissions"
+//                    val duration = Toast.LENGTH_SHORT
+//                    val toast = Toast.makeText(this, text, duration)
+//                    toast.show()
+//                }
+//            }
+//        if (checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+//            requestPermission.launch(Manifest.permission.READ_MEDIA_VIDEO)
+//        } else {
+//            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//                requestPermission.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+//            }
+//        }
 
         val vm = VideoEditorViewModel(application)
         vm.updateVideoProjectList(this)
@@ -148,7 +150,7 @@ class MainActivity : AppCompatActivity() {
                 val scope = rememberCoroutineScope()
 
                 val projectList by viewModel.videoProjectList.collectAsState()
-                Log.i("project list", "updateVideoProjectList: $projectList")
+                Log.i(APP_TAG, "updateVideoProjectList: $projectList")
 
                 AppNavigationDrawer(drawerState, pickMedia) {
                     Column {
@@ -173,7 +175,7 @@ class MainActivity : AppCompatActivity() {
         var uri: Uri
 
         if (!projectsBaseDir.exists() && !projectsBaseDir.mkdirs()) {
-            Log.i(TAG, "createNewProject: 创建项目文件失败！")
+            Log.i(APP_TAG, "createNewProject: 创建项目文件失败！")
         }
 
         var videoProject: VideoProject?
@@ -205,8 +207,8 @@ class MainActivity : AppCompatActivity() {
                 // create videoProject object
                 videoProject = VideoProject(
                     videoFileUri = uri.toString(),
-                    videoFilePath = "${dataDir.absolutePath}/${originalVideoFileNameAndExt}",
-                    videoInfoPath = "${dataDir.absolutePath}/${Constants.PROJECT_INFO}",
+                    videoFilePath = "${projectDir.absolutePath}/${originalVideoFileNameAndExt}",
+                    videoInfoPath = "${projectDir.absolutePath}/${Constants.PROJECT_INFO}",
                     projectFilePath = projectDir.absolutePath,
                     projectName = originalVideoFileName,
                     thumb = "${projectDir.absolutePath}/${Constants.PROJECT_THUMB}",
@@ -411,7 +413,7 @@ fun VideoProjectDetailDialog(
     videoProject: VideoProject,
     onDismissRequest: () -> Unit
 ) {
-    Log.i("project detail", "current project detail: $videoProject")
+    Log.i(APP_TAG, "current project detail: $videoProject")
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current

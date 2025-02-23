@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.transformer.Composition
@@ -17,20 +16,18 @@ import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.TransformationRequest
 import androidx.media3.transformer.Transformer
+import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
-import kotlinx.coroutines.CoroutineDispatcher
+import com.lingfenglong.videoeditor.entity.effect.TrimClipEffectInfo
+import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import kotlin.math.log
 
 class TransformManager(
     videoProject: VideoProject,
@@ -42,7 +39,14 @@ class TransformManager(
 
     private val effectInfoList: MutableList<EffectInfo> = mutableStateListOf()
     private val audioProcessor: MutableList<AudioProcessor> = mutableStateListOf()
-    private lateinit var trimmedMedia: MediaItem
+
+    private var trimClipEffectInfo: TrimClipEffectInfo? = null
+
+    private val mediaItem: MediaItem = MediaItem.Builder()
+        .setUri(videoProject.videoFileUri)
+        .build()
+
+    private var trimmedMediaItem: MediaItem? = null
     private lateinit var exportProcessLogLaunch: Job
 
     companion object {
@@ -53,6 +57,8 @@ class TransformManager(
         context: Context,
         exportSettings: ExportSettings
     ) {
+        Log.i(APP_TAG, "export settings: $exportSettings")
+
 //        // 获取 effects
 //        val effects = getEffects().apply {
 //            if (exportSettings.speed > 0) {
@@ -62,11 +68,7 @@ class TransformManager(
 //                add(SpeedChangeEffect(exportSettings.frameRate))
 //            }
 //        }
-//
-        val mediaItem = MediaItem.Builder()
-            .setUri(videoProject.videoFileUri)
-            .build()
-//
+
 //        val editedMediaItem = EditedMediaItem.Builder(mediaItem)
 //            .setEffects(Effects(audioProcessor, effects))
 //            .setRemoveVideo(exportSettings.exportVideo.not())
@@ -76,17 +78,17 @@ class TransformManager(
         val outputPath = exportSettings.exportPath + "/" + exportSettings.exportName + ".mp4"
 
         if (File(outputPath).createNewFile()) {
-            Log.e("VideoEditor", "create output file success: $outputPath")
+            Log.e(APP_TAG, "create output file success: $outputPath")
         } else {
-            Log.i("VideoEditor", "create output file failed: $outputPath")
+            Log.i(APP_TAG, "create output file failed: $outputPath")
         }
 
         transformer = Transformer.Builder(context)
             .setMuxerFactory(DefaultMuxer.Factory())
-//            .setVideoMimeType(exportSettings.videoMimeType)
-//            .setAudioMimeType(exportSettings.audioMimeType)
-            .setVideoMimeType(MimeTypes.VIDEO_H264)
-            .setAudioMimeType(MimeTypes.AUDIO_AAC)
+            .setVideoMimeType(exportSettings.videoMimeType)
+            .setAudioMimeType(exportSettings.audioMimeType)
+//            .setVideoMimeType(MimeTypes.VIDEO_H264)
+//            .setAudioMimeType(MimeTypes.AUDIO_AAC)
 //            .addListener()
             .build()
 //            .start()
@@ -102,7 +104,7 @@ class TransformManager(
         transformer.addListener(object : Transformer.Listener {
             override fun onCompleted(composition: Composition, exportResult: ExportResult) {
                 super.onCompleted(composition, exportResult)
-                Log.i("VideoEditor", "onCompleted: ${exportResult.toJson()}")
+                Log.i(APP_TAG, "onCompleted: ${exportResult.toJson()}")
                 exportProcessLogLaunch.cancel()
             }
 
@@ -112,7 +114,7 @@ class TransformManager(
                 exportException: ExportException,
             ) {
                 super.onError(composition, exportResult, exportException)
-                Log.e("VideoEditor", "onError: ${exportResult.toJson()}", exportException)
+                Log.e(APP_TAG, "onError: ${exportResult.toJson()}", exportException)
                 exportProcessLogLaunch.cancel()
             }
 
@@ -129,14 +131,14 @@ class TransformManager(
             }
         })
 
-        transformer.start(mediaItem, outputPath)
+        transformer.start(trimmedMediaItem ?: mediaItem, outputPath)
 
-        Log.i("VideoEditor", "exporting video: $outputPath")
+        Log.i(APP_TAG, "exporting video: $outputPath")
         exportProcessLogLaunch = CoroutineScope(Dispatchers.Main).launch {
             var currentProcess = this@TransformManager.getProgress()
             while (currentProcess < 1F) {
                 Log.i(
-                    "VideoEditor",
+                    APP_TAG,
                     "export process: ${currentProcess * 100}%, status: ${
                         transformer.getProgress(ProgressHolder())
                     }"
@@ -149,14 +151,10 @@ class TransformManager(
 
     private fun getEffects() = effectInfoList.map { it.effect() }.toMutableList()
 
-    fun addEffectInfo(effectInfo: EffectInfo) {
-        effectInfoList.add(effectInfo)
-        updateVideoEffect()
-    }
-
     private fun updateVideoEffect() {
         exoPlayer.apply {
             stop()
+            setMediaItem(trimmedMediaItem ?: mediaItem)
             setVideoEffects(getEffects())
             prepare()
         }
@@ -167,8 +165,60 @@ class TransformManager(
 
         return when(transformer.getProgress(progressHolder)) {
             Transformer.PROGRESS_STATE_UNAVAILABLE -> -1F
-            Transformer.PROGRESS_STATE_NOT_STARTED -> 0F
+            Transformer.PROGRESS_STATE_NOT_STARTED -> 1F
             else -> progressHolder.progress / 100F
         }
+    }
+
+    fun cancel() {
+        transformer.cancel()
+
+        // delete output file
+        transformer.javaClass.getDeclaredField("outputFilePath").apply {
+            isAccessible = true
+            val outputFile = get(transformer) as String
+            CoroutineScope(Dispatchers.Main).launch {
+                File(outputFile).delete()
+            }
+        }
+    }
+
+    fun getEffectInfoList(): List<EffectInfo> {
+        val res = ArrayList<EffectInfo>()
+        trimClipEffectInfo?.let { res += it }
+        res += effectInfoList
+        return res
+    }
+
+    fun addEffectInfo(effectInfo: EffectInfo) {
+        when(effectInfo) {
+            is TrimClipEffectInfo -> {
+                trimClipEffectInfo = effectInfo
+                trimmedMediaItem = MediaItem.Builder()
+                    .setUri(videoProject.videoFileUri)
+                    .setClippingConfiguration(
+                        MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(effectInfo.start)
+                            .setEndPositionMs(effectInfo.end)
+                            .build()
+                    )
+                    .build()
+            }
+
+            is WaterMarkEffectInfo -> {
+                effectInfoList += effectInfo
+            }
+        }
+        updateVideoEffect()
+    }
+
+    fun removeEffectInfo(effectInfo: EffectInfo) {
+        when(effectInfo) {
+            is TrimClipEffectInfo -> {
+                trimClipEffectInfo = null
+                trimmedMediaItem = null
+            }
+        }
+        updateVideoEffect()
     }
 }

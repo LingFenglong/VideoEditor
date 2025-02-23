@@ -70,6 +70,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.isPopupLayout
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
@@ -79,8 +80,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.lingfenglong.videoeditor.ExportDialog
+import com.lingfenglong.videoeditor.FrameSequence
 import com.lingfenglong.videoeditor.TransformManager
 import com.lingfenglong.videoeditor.VideoEditingHistory
+import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
 import com.lingfenglong.videoeditor.constant.VideoEditingTools
 import com.lingfenglong.videoeditor.entity.VideoEditingTool
 import com.lingfenglong.videoeditor.entity.VideoInfo
@@ -106,7 +109,6 @@ class VideoEditingActivity : AppCompatActivity() {
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun VideoEditingPage(videoProject: VideoProject) {
     Scaffold(
@@ -116,7 +118,20 @@ fun VideoEditingPage(videoProject: VideoProject) {
         content = {
             Column {
                 Spacer(modifier = Modifier.padding(top = it.calculateTopPadding()))
-                VideoPlayer(videoProject)
+                Box {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        VideoPlayer(videoProject)
+                    }
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        AppToolFloatingButton()
+                    }
+                }
             }
         },
         bottomBar = {
@@ -133,6 +148,9 @@ fun AppVideoEditingTopBar() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class)
 
     // TODO
+//    val exoPlayer = viewModel.transformManager.exoPlayer
+
+    // TODO may not correct
     val videoProjectName by remember { mutableStateOf(viewModel.transformManager.videoProject.projectName) }
 
     val activity = LocalActivity.current
@@ -166,9 +184,7 @@ fun AppVideoEditingTopBar() {
 
             IconButton(
                 colors = IconButtonDefaults.iconButtonColors(),
-                onClick = {
-                    exportDialogVisible = true
-                }
+                onClick = { exportDialogVisible = true }
             ) {
                 Icon(
                     modifier = Modifier.size(20.dp),
@@ -180,10 +196,7 @@ fun AppVideoEditingTopBar() {
     )
 
     if (videoEditingHistoryVisible) {
-        VideoEditingHistory(
-            onDismissRequest = { videoEditingHistoryVisible = false },
-            effectInfoList = mutableListOf()
-        )
+        VideoEditingHistory { videoEditingHistoryVisible = false }
     }
 
     if (exportDialogVisible) {
@@ -202,21 +215,14 @@ fun AppToolFloatingButton() {
     var showBottomSheet by remember { mutableStateOf(false) }
 
     // 按钮
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 160.dp, end = 16.dp),
-        contentAlignment = Alignment.BottomEnd
-    ) {
-        AnimatedVisibility(visible = showFloatActionButton, enter = fadeIn(), exit = fadeOut()) {
-            FloatingActionButton(
-                onClick = {
-                    showBottomSheet = true
-                    viewModel.setMagicToolButtonVisible(false)
-                }
-            ) {
-                Icon(Icons.Filled.Add, "Floating action button")
+    AnimatedVisibility(visible = showFloatActionButton, enter = fadeIn(), exit = fadeOut()) {
+        FloatingActionButton(
+            onClick = {
+                showBottomSheet = true
+                viewModel.setMagicToolButtonVisible(false)
             }
+        ) {
+            Icon(Icons.Filled.Add, "Floating action button")
         }
     }
 
@@ -331,9 +337,11 @@ fun VideoPlayer(videoProject: VideoProject) {
         viewModel.transformManager = it
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        AppToolFloatingButton()
-
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         DisposableEffect(key1 = Unit) {
             val listenerHandler = Handler(Looper.getMainLooper())
             val playerListener = object : Player.Listener {
@@ -352,7 +360,6 @@ fun VideoPlayer(videoProject: VideoProject) {
 
                 }
 
-                @androidx.annotation.OptIn(UnstableApi::class)
                 override fun onEvents(player2: Player, events: Player.Events) {
                     super.onEvents(player, events)
 
@@ -370,11 +377,11 @@ fun VideoPlayer(videoProject: VideoProject) {
 
                         viewModel.updateCurrentVideoInfo(VideoInfo(videoProject.videoFileUri.toUri(), framePerMillisecond, duration, frames, videoProject))
 
-                        Log.i("视频信息", "onEvents: player.videoFormat = ${player.videoFormat}")
-                        Log.i("视频信息", "onEvents: player.videoFormat.frameRate = ${player.videoFormat?.frameRate}")
-                        Log.i("视频信息", "onEvents: framePerMillisecond = $framePerMillisecond")
-                        Log.i("视频信息", "onEvents: duration = $duration")
-                        Log.i("视频信息", "onEvents: frames = $frames")
+                        Log.i(APP_TAG, "onEvents: player.videoFormat = ${player.videoFormat}")
+                        Log.i(APP_TAG, "onEvents: player.videoFormat.frameRate = ${player.videoFormat?.frameRate}")
+                        Log.i(APP_TAG, "onEvents: framePerMillisecond = $framePerMillisecond")
+                        Log.i(APP_TAG, "onEvents: duration = $duration")
+                        Log.i(APP_TAG, "onEvents: frames = $frames")
                     }
 
                     isPlaying = player.isPlaying
@@ -400,8 +407,8 @@ fun VideoPlayer(videoProject: VideoProject) {
                         currentTime =
                             player.currentPosition.coerceAtLeast(0L)
                         currentFrame = (currentTime * framePerMillisecond).toLong().coerceIn(0, frames)
-                        Log.i("current time", "$currentTime")
-                        Log.i("current frame", "$currentFrame")
+                        Log.i(APP_TAG, "$currentTime")
+                        Log.i(APP_TAG, "$currentFrame")
                     }
                 }
             }
@@ -416,7 +423,6 @@ fun VideoPlayer(videoProject: VideoProject) {
 
         AndroidView(
             modifier = Modifier
-                .align(Alignment.Center)
                 .clickable { viewModel.setControlsVisible(controlsVisible.not()) },
             factory = {
                 PlayerView(it).apply {
@@ -443,6 +449,10 @@ fun VideoPlayer(videoProject: VideoProject) {
 //            frames = { frames },
 //        )
 //        AppVideoPlayerControls(player, videoPlayerControlsStates)
+
+//        FrameSequence(
+//            interval = 10F
+//        )
     }
 
 }
@@ -501,10 +511,10 @@ private fun AppVideoPlayerControls(
                     modifier = Modifier.size(40.dp),
                     onClick = {
                         if (isVideoPlaying) {
-                            Log.i("controls pause button", "AppVideoPlayerControls: 暂停播放, playbackState: ${player.playbackState}")
+                            Log.i("VideoEditor", "AppVideoPlayerControls: 暂停播放, playbackState: ${player.playbackState}")
                             player.pause()
                         } else {
-                            Log.i("controls play button", "AppVideoPlayerControls: 继续播放, playbackState: ${player.playbackState}")
+                            Log.i("VideoEditor", "AppVideoPlayerControls: 继续播放, playbackState: ${player.playbackState}")
                             player.play()
                     }
                 }

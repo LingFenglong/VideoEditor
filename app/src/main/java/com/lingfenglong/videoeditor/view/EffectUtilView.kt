@@ -1,9 +1,8 @@
 package com.lingfenglong.videoeditor.view
 
-import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
+import android.text.SpannableString
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,21 +29,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RangeSlider
-import androidx.compose.material3.RangeSliderState
-import androidx.compose.material3.RichTooltip
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.TooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -70,108 +61,51 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.effect.OverlayEffect
+import androidx.media3.effect.OverlaySettings
 import androidx.media3.effect.TextOverlay
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
+import com.lingfenglong.videoeditor.entity.effect.TrimClipEffect
+import com.lingfenglong.videoeditor.entity.effect.TrimClipEffectInfo
 import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
+import com.lingfenglong.videoeditor.timeFormat
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
-
-class EffectUtilView {
-}
-
-
-//@Preview(showSystemUi = true)
 
 @Composable
 fun TrimClipEffect() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
-    val currentVideoInfo by viewModel.currentVideoInfo.collectAsState()
+    val transformManager = viewModel.transformManager
+    val videoProject = transformManager.videoProject
+    val exoPlayer = transformManager.exoPlayer
 
-    val startInteractionSource = remember { MutableInteractionSource() }
-    val endInteractionSource = remember { MutableInteractionSource() }
-    val startThumbAndTrackColors = SliderDefaults.colors(thumbColor = Color.Blue, activeTrackColor = Color.Red)
-    val endThumbColors = SliderDefaults.colors(thumbColor = Color.Green)
+    var currentPositionVisible by remember { mutableStateOf(false) }
+    var value by remember { mutableStateOf(0F..exoPlayer.duration.toFloat()) }
 
-    val rangeSliderState = remember {
-        RangeSliderState(
-            activeRangeStart = 0f,
-            activeRangeEnd = currentVideoInfo.frames.toFloat(),
-            valueRange = 0f..currentVideoInfo.frames.toFloat(),
-        )
-    }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        if (currentPositionVisible) {
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                textAlign = TextAlign.Center,
+                fontSize = 16.sp,
+                color = Color.Gray,
+                text = exoPlayer.currentPosition.timeFormat()
+            )
+        }
 
-    val mediaMetadataRetriever = MediaMetadataRetriever()
-    mediaMetadataRetriever.setDataSource(LocalContext.current, currentVideoInfo.uri)
-
-    val scope = rememberCoroutineScope()
-//    var startImage: ImageBitmap = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeStart.toInt())!!.asImageBitmap()
-//    var endImage: ImageBitmap = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeEnd.toInt())!!.asImageBitmap()
-//    rangeSliderState.onValueChangeFinished = {
-//        scope.launch {
-//            startImage = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeStart.toInt())!!.asImageBitmap()
-//            endImage = mediaMetadataRetriever.getFrameAtIndex(rangeSliderState.activeRangeEnd.toInt())!!.asImageBitmap()
-//        }
-//    }
-
-    val tooltipState = remember { TooltipState() }
-
-    DrawerEffectView {
         Column {
-
             // 进度条
             Row {
                 RangeSlider(
-                    state = rangeSliderState,
-                    startThumb = {
-                        Label(
-                            label = {
-                                TooltipBox(
-                                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
-                                    tooltip = {
-                                        RichTooltip(
-                                            title = { Text(text = "title") },
-                                            action = {},
-                                            caretSize = TooltipDefaults.caretSize
-                                        ) {
-                                            Text(text = "rich tool text")
-                                        }
-                                    },
-                                    state = tooltipState
-                                ) {
-                                    Card(shape = MaterialTheme.shapes.small) {
-//                                        Image(
-//                                            bitmap = startImage,
-//                                            contentDescription = "activeRangeStart"
-//                                        )
-                                    }
-                                }
-                            },
-                            interactionSource = startInteractionSource
-                        ) {
-                            SliderDefaults.Thumb(
-                                interactionSource = startInteractionSource,
-                                colors = startThumbAndTrackColors
-                            )
-                        }
-                    },
-                    endThumb = {
-                        Label(
-                            label = {
-                                Card(shape = RectangleShape) {
-//                                    Image(
-//                                        contentScale = ContentScale.Fit,
-//                                        bitmap = endImage,
-//                                        contentDescription = "activeRangeEnd"
-//                                    )
-                                }
-                            },
-                            interactionSource = endInteractionSource
-                        ) {
-                            SliderDefaults.Thumb(
-                                interactionSource = endInteractionSource,
-                                colors = endThumbColors
-                            )
-                        }
+                    valueRange = 0F..exoPlayer.duration.toFloat(),
+                    value = value,
+                    onValueChange = {
+                        value = it
+                        currentPositionVisible = true
+                        exoPlayer.seekTo(it.start.toLong())
                     }
                 )
             }
@@ -188,15 +122,31 @@ fun TrimClipEffect() {
                     }
                 ) {
                     Icon(
-                        painter = rememberVectorPainter(image = Icons.Default.Cancel),
+                        painter = rememberVectorPainter(image = Icons.Default.Close),
                         contentDescription = "取消"
                     )
                 }
                 IconButton(
-                    onClick = {}
+                    onClick = {
+                        val trimClipEffectInfo = TrimClipEffectInfo(
+                            start = value.start.toLong(), end = value.endInclusive.toLong(),
+                            effect = {
+                                TrimClipEffect(
+                                    start = value.start.toLong(),
+                                    end = value.endInclusive.toLong()
+                                )
+                            }
+                        )
+
+                        transformManager.addEffectInfo(trimClipEffectInfo)
+
+                        Log.i(APP_TAG, "TrimClipEffect: add trim clip effect $trimClipEffectInfo")
+                        viewModel.setMagicToolButtonVisible(true)
+                        viewModel.setEffectVisibleId(0)
+                    }
                 ) {
                     Icon(
-                        painter = rememberVectorPainter(image = Icons.Default.ConfirmationNumber),
+                        painter = rememberVectorPainter(image = Icons.Default.Check),
                         contentDescription = "确定"
                     )
                 }
@@ -204,6 +154,123 @@ fun TrimClipEffect() {
         }
     }
 }
+
+//@Preview(showSystemUi = true)
+//@Composable
+//fun TrimClipEffect() {
+//    val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
+//    val videoProject = viewModel.transformManager.videoProject
+//    val exoPlayer = viewModel.transformManager.exoPlayer
+//
+//    val mediaMetadataRetriever = MediaMetadataRetriever()
+//    mediaMetadataRetriever.setDataSource(LocalContext.current, videoProject.videoFileUri.toUri())
+//
+//    val scope = rememberCoroutineScope()
+//    var startImage: ImageBitmap by remember { mutableStateOf(mediaMetadataRetriever.getFrameAtIndex(0)!!.asImageBitmap()) }
+//    var endImage: ImageBitmap by remember { mutableStateOf(mediaMetadataRetriever.getFrameAtIndex(videoProject.frames.toInt() - 1)!!.asImageBitmap()) }
+//
+//    var retrieverJob: Job? = null
+//    val tooltipState = remember { TooltipState() }
+//    var value by remember { mutableStateOf(0F..(videoProject.frames - 1).toFloat()) }
+//
+//    DrawerEffectView {
+//        Column {
+//            // 进度条
+//            Row {
+//                RangeSlider(
+//                    valueRange = 0F..(videoProject.frames - 1).toFloat(),
+//                    value = value,
+//                    onValueChange = {
+//                        value = it
+//                        retrieverJob?.cancel()
+//                        retrieverJob = scope.launch {
+//                            delay(200)
+//                            exoPlayer.seekTo()
+//                            Log.i(APP_TAG, "TrimClipEffect: retrieving image ${value.start.toInt()}, ${value.endInclusive.toInt()}")
+//                            startImage = mediaMetadataRetriever.getFrameAtIndex(value.start.toInt())!!.asImageBitmap()
+//                            endImage = mediaMetadataRetriever.getFrameAtIndex(value.endInclusive.toInt())!!.asImageBitmap()
+//                            Log.i(APP_TAG, "TrimClipEffect: retrieved image ${value.start.toInt()}, ${value.endInclusive.toInt()}")
+//                        }
+//                    },
+////                    startThumb = {
+////                        Label(
+////                            label = {
+////                                TooltipBox(
+////                                    positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+////                                    tooltip = {
+////                                        RichTooltip(
+////                                            title = { Text(text = "title") },
+////                                            action = {},
+////                                            caretSize = TooltipDefaults.caretSize
+////                                        ) {
+////                                            Text(text = "rich tool text")
+////                                        }
+////                                    },
+////                                    state = tooltipState
+////                                ) {
+////                                    Card(shape = MaterialTheme.shapes.small) {
+////                                        Image(bitmap = startImage, contentDescription = "activeRangeStart")
+////                                    }
+////                                }
+////                            },
+////                            interactionSource = startInteractionSource
+////                        ) {
+////                            SliderDefaults.Thumb(
+////                                interactionSource = startInteractionSource,
+////                                colors = startThumbAndTrackColors
+////                            )
+////                        }
+////                    },
+////                    endThumb = {
+////                        Label(
+////                            label = {
+////                                Card(shape = RectangleShape) {
+////                                    Image(
+////                                        contentScale = ContentScale.Fit,
+////                                        bitmap = endImage,
+////                                        contentDescription = "activeRangeEnd"
+////                                    )
+////                                }
+////                            },
+////                            interactionSource = endInteractionSource
+////                        ) {
+////                            SliderDefaults.Thumb(
+////                                interactionSource = endInteractionSource,
+////                                colors = endThumbColors
+////                            )
+////                        }
+////                    }
+//                )
+//            }
+//
+//            // 取消 和 确认
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.End
+//            ) {
+//                IconButton(
+//                    onClick = {
+//                        viewModel.setMagicToolButtonVisible(true)
+//                        viewModel.setEffectVisibleId(0)
+//                    }
+//                ) {
+//                    Icon(
+//                        painter = rememberVectorPainter(image = Icons.Default.Close),
+//                        contentDescription = "取消"
+//                    )
+//                }
+//                IconButton(
+//                    onClick = {}
+//                ) {
+//                    Icon(
+//                        painter = rememberVectorPainter(image = Icons.Default.Check),
+//                        contentDescription = "确定"
+//                    )
+//                }
+//            }
+//        }
+//    }
+//}
 
 @Composable
 fun MergeEffect() {
@@ -524,15 +591,25 @@ fun WaterMarkEffect() {
                         horizontalArrangement = Arrangement.End,
                     ) {
                         TextButton(
-                            onClick = { dialogVisible = false },
+                            onClick = { dialogVisible = false; viewModel.setMagicToolButtonVisible(true) },
                         ) {
                             Text("取消")
                         }
                         TextButton(
                             onClick = {
-//                                viewModel.addEffectInfo(WaterMarkEffectInfo(effect = { OverlayEffect(listOf(TextOverlay.createStaticBitmapOverlay(
-//                                Bitmap.createBitmap(1,1, Bitmap.Config.RGBA_F16)))) }))
+                                val textOverlay = TextOverlay.createStaticTextOverlay(
+                                    SpannableString.valueOf(text),
+                                    OverlaySettings.Builder()
+                                        .build()
+                                )
+
+                                transformManager.addEffectInfo(
+                                    WaterMarkEffectInfo {
+                                        OverlayEffect(listOf(textOverlay))
+                                    }
+                                )
                                 dialogVisible = false
+                                viewModel.setMagicToolButtonVisible(true)
                             }
                         ) {
                             Text("确定")
@@ -574,16 +651,5 @@ fun WaterMarkEffect() {
                 }
             )
         }
-    }
-}
-
-
-@Composable
-fun DrawerEffectView(bottomDrawerView: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        bottomDrawerView.invoke()
     }
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.lingfenglong.videoeditor.TransformManager
 import com.lingfenglong.videoeditor.Util
 import com.lingfenglong.videoeditor.constant.Constants
+import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
 import com.lingfenglong.videoeditor.entity.VideoInfo
 import com.lingfenglong.videoeditor.entity.VideoProject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,7 +79,7 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
                 } ?: emptyList()
         }
 
-        Log.i("project list", "updateVideoProjectList: ${_videoProjectList.value}")
+        Log.i(APP_TAG, "updateVideoProjectList: ${_videoProjectList.value}")
     }
 
     fun setVideoPlaying(isPLaying: Boolean) {
@@ -102,7 +103,7 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
 //    fun addEffectInfo(effectInfo: EffectInfo) {
 //        _currentProject.update {
 //            it.effectInfoList.add(effectInfo)
-//            Log.i("EffectInfo", "current video project effectInfo: ${it.effectInfoList}")
+//            Log.i(APP_TAG, "current video project effectInfo: ${it.effectInfoList}")
 //            it
 //        }
 //    }

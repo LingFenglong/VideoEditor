@@ -32,6 +32,8 @@ fun getFileNameAndExtFromUri(context: Context, uri: Uri): String {
     return "null"
 }
 
+fun Float.withPrecision(precision: Int) = "%.${precision}f".format(this)
+
 fun Long.timeFormat(): String = LocalTime.of(0,0,0,0)
     .plusSeconds(this / 1000)
     .format(DateTimeFormatter.ofPattern("HH:mm:ss"))
