@@ -4,8 +4,10 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import android.view.View
+import android.widget.Toast
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import com.lingfenglong.videoeditor.activity.VideoEditingActivity
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -43,4 +45,8 @@ fun Long.timeFormat(): String = LocalTime.of(0,0,0,0)
 
 fun View.makeSnackBar(text: String, duration: Int = Snackbar.LENGTH_SHORT) {
     Snackbar.make(this, text, duration).show()
+}
+
+fun String.makeToast(duration: Int = Snackbar.LENGTH_SHORT) {
+    Toast.makeText(VideoEditorApplication.application, this, duration).show()
 }

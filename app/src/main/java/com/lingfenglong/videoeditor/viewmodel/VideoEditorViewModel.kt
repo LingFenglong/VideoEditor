@@ -36,9 +36,6 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
     private val _videoCurrentPosition = MutableStateFlow(-1L)
     val videoCurrentPosition: StateFlow<Long> = _videoCurrentPosition.asStateFlow()
 
-    private val _currentVideoInfo = MutableStateFlow(VideoInfo.EMPTY)
-    val currentVideoInfo: StateFlow<VideoInfo> = _currentVideoInfo.asStateFlow()
-
     /**
      * 对应 id 的 effect 是否可见
      * 0 -> effect 不可见
@@ -89,26 +86,4 @@ class VideoEditorViewModel(application: Application) : AndroidViewModel(applicat
     fun setEffectVisibleId(id: Int) {
         _effectVisibleId.update { id }
     }
-
-    fun updateCurrentVideoInfo(videoInfo: VideoInfo) {
-        _currentVideoInfo.update { videoInfo }
-    }
-
-//    fun updateCurrentVideoProject(videoProject: VideoProject) {
-//        _transformerManager.update {
-//            transformerManager
-//        }
-//    }
-//
-//    fun addEffectInfo(effectInfo: EffectInfo) {
-//        _currentProject.update {
-//            it.effectInfoList.add(effectInfo)
-//            Log.i(APP_TAG, "current video project effectInfo: ${it.effectInfoList}")
-//            it
-//        }
-//    }
-
-//    fun updateTransformerManager(transformManager: TransformManager) {
-//        _transformerManager.update { transformManager }
-//    }
 }

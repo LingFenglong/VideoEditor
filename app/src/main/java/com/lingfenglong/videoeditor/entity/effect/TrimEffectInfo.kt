@@ -4,7 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.media3.common.Effect
 
-class TrimClipEffectInfo(
+class TrimEffectInfo(
     val start: Long,
     val end: Long,
     effect: () -> Effect
@@ -17,5 +17,3 @@ class TrimClipEffectInfo(
         return "TrimEffectInfo(start=$start, end=$end)"
     }
 }
-
-class TrimClipEffect(val start: Long, val end: Long) : Effect

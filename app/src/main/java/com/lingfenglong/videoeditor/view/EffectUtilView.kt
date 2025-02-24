@@ -33,6 +33,7 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilledTonalButton
@@ -73,23 +74,24 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.OverlaySettings
+import androidx.media3.effect.Presentation
 import androidx.media3.effect.TextOverlay
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
 import com.lingfenglong.videoeditor.entity.effect.MergeEffectInfo
 import com.lingfenglong.videoeditor.entity.effect.NoneEffect
-import com.lingfenglong.videoeditor.entity.effect.TrimClipEffect
-import com.lingfenglong.videoeditor.entity.effect.TrimClipEffectInfo
+import com.lingfenglong.videoeditor.entity.effect.PresentationEffectInfo
+import com.lingfenglong.videoeditor.entity.effect.TrimEffectInfo
 import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
 import com.lingfenglong.videoeditor.timeFormat
+import com.lingfenglong.videoeditor.toJson
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
 
 @Composable
 fun TrimClipEffect() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
     val transformManager = viewModel.transformManager
-    val videoProject = transformManager.videoProject
     val exoPlayer = transformManager.exoPlayer
 
     var currentPositionVisible by remember { mutableStateOf(false) }
@@ -141,19 +143,14 @@ fun TrimClipEffect() {
                 }
                 IconButton(
                     onClick = {
-                        val trimClipEffectInfo = TrimClipEffectInfo(
+                        val trimEffectInfo = TrimEffectInfo(
                             start = value.start.toLong(), end = value.endInclusive.toLong(),
-                            effect = {
-                                TrimClipEffect(
-                                    start = value.start.toLong(),
-                                    end = value.endInclusive.toLong()
-                                )
-                            }
+                            effect = { NoneEffect }
                         )
 
-                        transformManager.addEffectInfo(trimClipEffectInfo)
+                        transformManager.addEffectInfo(trimEffectInfo)
 
-                        Log.i(APP_TAG, "TrimClipEffect: add trim clip effect $trimClipEffectInfo")
+                        Log.i(APP_TAG, "TrimClipEffect: add trim clip effect $trimEffectInfo")
                         viewModel.setMagicToolButtonVisible(true)
                         viewModel.setEffectVisibleId(0)
                     }
@@ -318,7 +315,6 @@ fun MergeEffect() {
     var position by remember { mutableStateOf(MergeEffectInfo.Position.AFTER) }
 
     var switchChecked by remember { mutableStateOf(true) }
-    var dialogVisible by remember { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -326,8 +322,8 @@ fun MergeEffect() {
         it?.let { uri = it }
     }
 
-    Card {
-        Dialog(onDismissRequest = { dialogVisible = false }) {
+    Dialog(onDismissRequest = { viewModel.setEffectVisibleId(0) }) {
+        Card {
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
@@ -350,7 +346,7 @@ fun MergeEffect() {
                         )
                     }
                 ) {
-                    if (uri == null) {
+                    if (uri == Uri.EMPTY) {
                         Icon(
                             modifier = Modifier.size(80.dp),
                             painter = rememberVectorPainter(Icons.Default.Upload),
@@ -396,14 +392,14 @@ fun MergeEffect() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(
-                    onClick = { dialogVisible = false }
+                    onClick = { viewModel.setEffectVisibleId(0) }
                 ) {
                     Text("取消")
                 }
 
                 TextButton(
                     onClick = {
-                        dialogVisible = false;
+                        viewModel.setEffectVisibleId(0)
                         transformManager.addEffectInfo(
                             MergeEffectInfo(
                                 uri = uri,
@@ -425,13 +421,17 @@ fun MergeEffect() {
 @Composable
 fun CompressEffect() {
     val viewModel = viewModel(modelClass = VideoEditorViewModel::class.java)
-    val currentVideoInfo by viewModel.currentVideoInfo.collectAsState()
+    val transformManager = viewModel.transformManager
+    val exoPlayer = transformManager.exoPlayer
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var dialogVisible by remember { mutableStateOf(true) }
 
-    var width by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
+    var dialogVisible by remember { mutableStateOf(true) }
+    var dropdownMenuExpanded by remember { mutableStateOf(false) }
+
+    var width by remember { mutableStateOf(exoPlayer.surfaceSize.width) }
+    var height by remember { mutableStateOf(exoPlayer.surfaceSize.height) }
+    var layout by remember { mutableStateOf(Presentation.LAYOUT_SCALE_TO_FIT) }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (!dialogVisible) {
@@ -454,30 +454,54 @@ fun CompressEffect() {
                             style = MaterialTheme.typography.headlineSmall
                         )
 
-                        TextField(
-                            value = width,
-                            onValueChange = { width = it },
-                            label = {
-                                Text("宽度")
-                            },
+                        OutlinedTextField(
+                            value = width.toString(),
+                            onValueChange = { width = it.toInt() },
+                            label = { Text("宽度") },
                             suffix = { Text("px") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
 
-                        TextField(
-                            value = height,
-                            onValueChange = { height = it },
-                            label = {
-                                Text("高度")
-                            },
+                        OutlinedTextField(
+                            value = height.toString(),
+                            onValueChange = { height = it.toInt() },
+                            label = { Text("高度") },
                             suffix = { Text("px") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
+
+                        DropdownMenu(
+                            expanded = dropdownMenuExpanded,
+                            onDismissRequest = { dropdownMenuExpanded = false }
+                        ) {
+                            OutlinedTextField(
+                                value = when(layout) {
+                                    Presentation.LAYOUT_STRETCH_TO_FIT -> ""
+                                    Presentation.LAYOUT_SCALE_TO_FIT -> ""
+                                    Presentation.LAYOUT_SCALE_TO_FIT_WITH_CROP -> ""
+                                    else -> "None"
+                                },
+                                onValueChange = { layout = it.toInt() },
+                                label = { Text("布局") }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text(text = "scale to fit") },
+                                onClick = { layout = Presentation.LAYOUT_SCALE_TO_FIT }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = "stretch to fit") },
+                                onClick = { layout = Presentation.LAYOUT_STRETCH_TO_FIT }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = "scale to fit with crop") },
+                                onClick = { layout = Presentation.LAYOUT_SCALE_TO_FIT_WITH_CROP }
+                            )
+                        }
 
                         Row(
                             horizontalArrangement = Arrangement.End,
-                            modifier = Modifier
-                                .fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             TextButton(
                                 onClick = { dialogVisible = false },
@@ -485,7 +509,17 @@ fun CompressEffect() {
                                 Text("取消")
                             }
                             TextButton(
-                                onClick = { TODO() }
+                                onClick = {
+                                    transformManager.addEffectInfo(
+                                        PresentationEffectInfo(width, height) {
+                                            Presentation.createForWidthAndHeight(
+                                                width,
+                                                height,
+                                                layout
+                                            )
+                                        }
+                                    )
+                                }
                             ) {
                                 Text("确定")
                             }

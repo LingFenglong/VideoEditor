@@ -369,8 +369,6 @@ fun VideoPlayer(videoProject: VideoProject) {
                         duration = player.duration
                         frames = (duration * framePerMillisecond).toLong()
 
-                        viewModel.updateCurrentVideoInfo(VideoInfo(videoProject.videoFileUri.toUri(), framePerMillisecond, duration, frames, videoProject))
-
                         Log.i(APP_TAG, "onEvents: player.videoFormat = ${player.videoFormat}")
                         Log.i(APP_TAG, "onEvents: player.videoFormat.frameRate = ${player.videoFormat?.frameRate}")
                         Log.i(APP_TAG, "onEvents: framePerMillisecond = $framePerMillisecond")
