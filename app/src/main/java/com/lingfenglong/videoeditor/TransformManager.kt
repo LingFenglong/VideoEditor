@@ -6,11 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.DefaultMuxer
+import androidx.media3.transformer.EditedMediaItem
+import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
@@ -20,6 +23,8 @@ import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
 import com.lingfenglong.videoeditor.entity.ExportSettings
 import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.entity.effect.EffectInfo
+import com.lingfenglong.videoeditor.entity.effect.MergeEffectInfo
+import com.lingfenglong.videoeditor.entity.effect.NoneEffect
 import com.lingfenglong.videoeditor.entity.effect.TrimClipEffectInfo
 import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
 import kotlinx.coroutines.CoroutineScope
@@ -34,19 +39,21 @@ class TransformManager(
 ) {
     var videoProject: VideoProject by mutableStateOf(videoProject)
     lateinit var exoPlayer: ExoPlayer
-
     private lateinit var transformer: Transformer
-
-    private val effectInfoList: MutableList<EffectInfo> = mutableStateListOf()
-    private val audioProcessor: MutableList<AudioProcessor> = mutableStateListOf()
-
-    private var trimClipEffectInfo: TrimClipEffectInfo? = null
 
     private val mediaItem: MediaItem = MediaItem.Builder()
         .setUri(videoProject.videoFileUri)
         .build()
 
     private var trimmedMediaItem: MediaItem? = null
+
+    private val effectInfoList: MutableList<EffectInfo> = mutableStateListOf()
+    private val audioProcessor: MutableList<AudioProcessor> = mutableStateListOf()
+    private var trimEffectInfo: TrimClipEffectInfo? = null
+    private val mergeEffectInfoList: MutableList<MergeEffectInfo> = mutableListOf(
+        MergeEffectInfo(videoProject.videoFileUri.toUri(), MergeEffectInfo.Position.NONE, { NoneEffect })
+    )
+
     private lateinit var exportProcessLogLaunch: Job
 
     companion object {
@@ -93,14 +100,14 @@ class TransformManager(
             .build()
 //            .start()
 
-//        val composition = Composition.Builder()
-//            .setHdrMode()
-//            .setEffects()
-//            .build()
+        val composition: Composition = Composition.Builder(
+            EditedMediaItemSequence.Builder(
+                mergeEffectInfoList
+                    .map { MediaItem.Builder().setUri(it.uri).build() }
+                    .map { EditedMediaItem.Builder(it).build() }
+            ).build()
+        ).build()
 
-//        context.contentResolver.openFileDescriptor((exportSettings.exportPath + "/" + exportSettings.exportName).toUri(), "rw")?.use {
-//            transformer.start
-//        }
         transformer.addListener(object : Transformer.Listener {
             override fun onCompleted(composition: Composition, exportResult: ExportResult) {
                 super.onCompleted(composition, exportResult)
@@ -132,6 +139,7 @@ class TransformManager(
         })
 
         transformer.start(trimmedMediaItem ?: mediaItem, outputPath)
+        transformer.start(composition, outputPath)
 
         Log.i(APP_TAG, "exporting video: $outputPath")
         exportProcessLogLaunch = CoroutineScope(Dispatchers.Main).launch {
@@ -185,7 +193,7 @@ class TransformManager(
 
     fun getEffectInfoList(): List<EffectInfo> {
         val res = ArrayList<EffectInfo>()
-        trimClipEffectInfo?.let { res += it }
+        trimEffectInfo?.let { res += it }
         res += effectInfoList
         return res
     }
@@ -193,7 +201,7 @@ class TransformManager(
     fun addEffectInfo(effectInfo: EffectInfo) {
         when(effectInfo) {
             is TrimClipEffectInfo -> {
-                trimClipEffectInfo = effectInfo
+                trimEffectInfo = effectInfo
                 trimmedMediaItem = MediaItem.Builder()
                     .setUri(videoProject.videoFileUri)
                     .setClippingConfiguration(
@@ -203,6 +211,10 @@ class TransformManager(
                             .build()
                     )
                     .build()
+            }
+
+            is MergeEffectInfo -> {
+                mergeEffectInfoList += effectInfo
             }
 
             is WaterMarkEffectInfo -> {
@@ -215,8 +227,16 @@ class TransformManager(
     fun removeEffectInfo(effectInfo: EffectInfo) {
         when(effectInfo) {
             is TrimClipEffectInfo -> {
-                trimClipEffectInfo = null
+                trimEffectInfo = null
                 trimmedMediaItem = null
+            }
+
+            is MergeEffectInfo -> {
+                if (effectInfo.position == MergeEffectInfo.Position.NONE) {
+
+                } else {
+                    mergeEffectInfoList.remove(effectInfo)
+                }
             }
         }
         updateVideoEffect()

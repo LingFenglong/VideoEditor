@@ -1,6 +1,5 @@
 package com.lingfenglong.videoeditor.activity
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -70,17 +69,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.isPopupLayout
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.lingfenglong.videoeditor.ExportDialog
-import com.lingfenglong.videoeditor.FrameSequence
 import com.lingfenglong.videoeditor.TransformManager
 import com.lingfenglong.videoeditor.VideoEditingHistory
 import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
@@ -91,15 +87,13 @@ import com.lingfenglong.videoeditor.entity.VideoProject
 import com.lingfenglong.videoeditor.timeFormat
 import com.lingfenglong.videoeditor.toObject
 import com.lingfenglong.videoeditor.viewmodel.VideoEditorViewModel
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 class VideoEditingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val project = intent.getStringExtra("videoProject")!!.toObject(VideoProject::class.java)
-        val uri = project.videoFileUri
+        project.videoFileUri
 
         setContent {
             MaterialTheme {
@@ -430,6 +424,23 @@ fun VideoPlayer(videoProject: VideoProject) {
                     hideController()
                     setShowPreviousButton(false)
                     setShowNextButton(false)
+
+//                    setOnTouchListener(object : View.OnTouchListener {
+//                        val gestureDetector = GestureDetector(
+//                            context,
+//                            object : GestureDetector.SimpleOnGestureListener() {
+//
+//                            }
+//                        )
+//
+//                        override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
+//                            if (motionEvent != null) {
+//                                gestureDetector.onTouchEvent(motionEvent)
+//                            }
+//                            return true
+//                        }
+//
+//                    })
                 }
 //                textureView = TextureView(context).apply {
 //                    layoutParams = LayoutParams(

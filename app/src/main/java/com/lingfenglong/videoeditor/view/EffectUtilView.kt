@@ -1,7 +1,13 @@
 package com.lingfenglong.videoeditor.view
 
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.text.SpannableString
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,11 +28,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +43,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RangeSlider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -48,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -66,6 +77,8 @@ import androidx.media3.effect.TextOverlay
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import com.lingfenglong.videoeditor.constant.Constants.Companion.APP_TAG
+import com.lingfenglong.videoeditor.entity.effect.MergeEffectInfo
+import com.lingfenglong.videoeditor.entity.effect.NoneEffect
 import com.lingfenglong.videoeditor.entity.effect.TrimClipEffect
 import com.lingfenglong.videoeditor.entity.effect.TrimClipEffectInfo
 import com.lingfenglong.videoeditor.entity.effect.WaterMarkEffectInfo
@@ -272,9 +285,139 @@ fun TrimClipEffect() {
 //    }
 //}
 
+
+@Preview
+@Composable
+fun MergeEffectPreview() {
+    var dialogVisible by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        FilledTonalButton(
+            onClick = { dialogVisible = true }
+        ) {
+            Text(text = "按钮")
+        }
+
+        if (dialogVisible) {
+            MergeEffect()
+        }
+    }
+}
+
+
 @Composable
 fun MergeEffect() {
+    val viewModel = viewModel(modelClass = VideoEditorViewModel::class)
+    val transformManager = viewModel.transformManager
+    val context = LocalContext.current
 
+    var uri by remember { mutableStateOf(Uri.EMPTY) }
+    var position by remember { mutableStateOf(MergeEffectInfo.Position.AFTER) }
+
+    var switchChecked by remember { mutableStateOf(true) }
+    var dialogVisible by remember { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) {
+        it?.let { uri = it }
+    }
+
+    Card {
+        Dialog(onDismissRequest = { dialogVisible = false }) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = "合并片段",
+                style = MaterialTheme.typography.headlineSmall
+            )
+
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    modifier = Modifier.wrapContentSize(),
+                    onClick = {
+                        launcher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
+                        )
+                    }
+                ) {
+                    if (uri == null) {
+                        Icon(
+                            modifier = Modifier.size(80.dp),
+                            painter = rememberVectorPainter(Icons.Default.Upload),
+                            contentDescription = "上传文件"
+                        )
+                    } else {
+                        val mediaMetadataRetriever = MediaMetadataRetriever()
+                        mediaMetadataRetriever.setDataSource(context, uri)
+                        val imageBitmap = mediaMetadataRetriever.getFrameAtIndex(0)!!.asImageBitmap()
+                        Image(
+                            bitmap = imageBitmap,
+                            contentDescription = "所选视频的第一帧"
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "片段前")
+
+                Switch(
+                    checked = switchChecked,
+                    onCheckedChange = {
+                        switchChecked = switchChecked.not()
+                        position = if(switchChecked) MergeEffectInfo.Position.AFTER else MergeEffectInfo.Position.BEFORE
+                    }
+                )
+
+                Text(text = "片段后")
+            }
+
+            Spacer(modifier = Modifier.padding(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { dialogVisible = false }
+                ) {
+                    Text("取消")
+                }
+
+                TextButton(
+                    onClick = {
+                        dialogVisible = false;
+                        transformManager.addEffectInfo(
+                            MergeEffectInfo(
+                                uri = uri,
+                                position = position,
+                                effect = { NoneEffect }
+                            )
+                        )
+                    }
+                ) {
+                    Text("确定")
+                }
+            }
+        }
+    }
 }
 
 //@Preview(showSystemUi = true)
@@ -355,7 +498,7 @@ fun CompressEffect() {
 }
 
 
-@Preview(showSystemUi = true)
+//@Preview(showSystemUi = true)
 @Composable
 fun WaterMarkEffect() {
     val viewModel = viewModel(modelClass =  VideoEditorViewModel::class)

@@ -3,6 +3,8 @@ package com.lingfenglong.videoeditor
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import android.view.View
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -37,3 +39,8 @@ fun Float.withPrecision(precision: Int) = "%.${precision}f".format(this)
 fun Long.timeFormat(): String = LocalTime.of(0,0,0,0)
     .plusSeconds(this / 1000)
     .format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+
+
+fun View.makeSnackBar(text: String, duration: Int = Snackbar.LENGTH_SHORT) {
+    Snackbar.make(this, text, duration).show()
+}

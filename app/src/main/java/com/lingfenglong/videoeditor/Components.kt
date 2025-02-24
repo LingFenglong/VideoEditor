@@ -115,7 +115,7 @@ fun VideoEditingHistory(
                 LazyColumn(modifier = Modifier.height(300.dp)) {
                     items(effectInfoList) {
                         EffectInfoItem(it) {
-                            effectInfoList.remove(it);
+                            effectInfoList.remove(it)
                             transformManager.removeEffectInfo(it)
                         }
                     }
